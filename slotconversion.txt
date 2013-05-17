@@ -1,0 +1,255 @@
+EQEmu Inventory Slot Conversion
+-------------------------------
+
+[Quick Guide for New Slot Structure]
+{slottype, mainslot, subslot, augslot}
+
+{A, B, -1, -1}  - Parent Item
+{A, B, C, -1}   - Child Item
+{A, B, -1, D}   - Parent Augment Item
+{A, B, C, D}    - Child Augment Item
+{-1, -1 -1, -1} - Item Delete
+
+[Main Slot Enumeration]
+Designation    Old Slot ID    New Slot Array
+ Charm          0              {0, 0, -1, -1}
+ Ear01          1              {0, 1, -1, -1}
+ Head           2              {0, 2, -1, -1}
+ Face           3              {0, 3, -1, -1}
+ Ear02          4              {0, 4, -1, -1}
+ Neck           5              {0, 5, -1, -1}
+ Shoulders      6              {0, 6, -1, -1}
+ Arms           7              {0, 7, -1, -1}
+ Back           8              {0, 8, -1, -1}
+ Bracer01       9              {0, 9, -1, -1}
+ Bracer02       10             {0, 10, -1, -1}
+ Range          11             {0, 11, -1, -1}
+ Hands          12             {0, 12, -1, -1}
+ Primary        13             {0, 13, -1, -1}
+ Secondary      14             {0, 14, -1, -1}
+ Ring01         15             {0, 15, -1, -1}
+ Ring02         16             {0, 16, -1, -1}
+ Chest          17             {0, 17, -1, -1}
+ Legs           18             {0, 18, -1, -1}
+ Feet           19             {0, 19, -1, -1}
+ Waist          20             {0, 20, -1, -1}
+ Power Source   9999           {0, 21, -1, -1}
+ Ammo           21             {0, 22, -1, -1}
+ Personal01     22             {0, 23, -1, -1}
+ Personal02     23             {0, 24, -1, -1}
+ Personal03     24             {0, 25, -1, -1}
+ Personal04     25             {0, 26, -1, -1}
+ Personal05     26             {0, 27, -1, -1}
+ Personal06     27             {0, 28, -1, -1}
+ Personal07     28             {0, 29, -1, -1}
+ Personal08     29             {0, 30, -1, -1}
+ Personal09     [n/a]          {0, 31, -1, -1}
+ Personal10     [n/a]          {0, 32, -1, -1}
+ Cursor         30             {0, 33, -1, -1}
+
+ Tribute01      400            {6, 0, -1, -1}
+ Tribute02      401            {6, 1, -1, -1}
+ Tribute03      402            {6, 2, -1, -1}
+ Tribute04      403            {6, 3, -1, -1}
+ Tribute05      404            {6, 4, -1, -1}
+
+ Bank01         2000           {1, 0, -1, -1}
+ Bank02         2001           {1, 1, -1, -1}
+ Bank03         2002           {1, 2, -1, -1}
+ Bank04         2003           {1, 3, -1, -1}
+ Bank05         2004           {1, 4, -1, -1}
+ Bank06         2005           {1, 5, -1, -1}
+ Bank07         2006           {1, 6, -1, -1}
+ Bank08         2007           {1, 7, -1, -1}
+ Bank09         2008           {1, 8, -1, -1}
+ Bank10         2009           {1, 9, -1, -1}
+ Bank11         2010           {1, 10, -1, -1}
+ Bank12         2011           {1, 11, -1, -1}
+ Bank13         2012           {1, 12, -1, -1}
+ Bank14         2013           {1, 13, -1, -1}
+ Bank15         2014           {1, 14, -1, -1}
+ Bank16         2015           {1, 15, -1, -1}
+ Bank17         2016           {1, 16, -1, -1}
+ Bank18         2017           {1, 17, -1, -1}
+ Bank19         2018           {1, 18, -1, -1}
+ Bank20         2019           {1, 19, -1, -1}
+ Bank21         2020           {1, 20, -1, -1}
+ Bank22         2021           {1, 21, -1, -1}
+ Bank23         2022           {1, 22, -1, -1}
+ Bank24         2023           {1, 23, -1, -1}
+
+ SharedBank01   2500           {2, 0, -1, -1}
+ SharedBank02   2501           {2, 1, -1, -1}
+
+ Trade01        3000           {3, 0, -1, -1}
+ Trade02        3001           {3, 1, -1, -1}
+ Trade03        3002           {3, 2, -1, -1}
+ Trade04        3003           {3, 3, -1, -1}
+ Trade05        3004           {3, 4, -1, -1}
+ Trade06        3005           {3, 5, -1, -1}
+ Trade07        3006           {3, 6, -1, -1}
+ Trade08        3007           {3, 7, -1, -1}
+
+ World01        4000           {4, 0, -1, -1}
+ World02        4001           {4, 1, -1, -1}
+ World03        4002           {4, 2, -1, -1}
+ World04        4003           {4, 3, -1, -1}
+ World05        4004           {4, 4, -1, -1}
+ World06        4005           {4, 5, -1, -1}
+ World07        4006           {4, 6, -1, -1}
+ World08        4007           {4, 7, -1, -1}
+ World09        4008           {4, 8, -1, -1}
+ World10        4009           {4, 9, -1, -1}
+
+
+[Bag Slot Enumeration]
+Designation    Old Slot ID    New Slot Array
+ [Personal01]
+ Slot01         251            {0, 23, 0, -1}
+ Slot02         252            {0, 23, 1, -1}
+ Slot03         253            {0, 23, 2, -1}
+ Slot04         254            {0, 23, 3, -1}
+ Slot05         255            {0, 23, 4, -1}
+ Slot06         256            {0, 23, 5, -1}
+ Slot07         257            {0, 23, 6, -1}
+ Slot08         258            {0, 23, 7, -1}
+ Slot09         259            {0, 23, 8, -1}
+ Slot10         260            {0, 23, 9, -1}
+
+ [Personal02]
+ Slot01         261            {0, 24, 0, -1}
+ Slot02         262            {0, 24, 1, -1}
+ Slot03         263            {0, 24, 2, -1}
+ Slot04         264            {0, 24, 3, -1}
+ Slot05         265            {0, 24, 4, -1}
+ Slot06         266            {0, 24, 5, -1}
+ Slot07         267            {0, 24, 6, -1}
+ Slot08         268            {0, 24, 7, -1}
+ Slot09         269            {0, 24, 8, -1}
+ Slot10         270            {0, 24, 9, -1}
+
+ [Personal03]
+ Slot01         271            {0, 25, 0, -1}
+ Slot02         272            {0, 25, 1, -1}
+ Slot03         273            {0, 25, 2, -1}
+ Slot04         274            {0, 25, 3, -1}
+ Slot05         275            {0, 25, 4, -1}
+ Slot06         276            {0, 25, 5, -1}
+ Slot07         277            {0, 25, 6, -1}
+ Slot08         278            {0, 25, 7, -1}
+ Slot09         279            {0, 25, 8, -1}
+ Slot10         280            {0, 25, 9, -1}
+
+ [Personal04]
+ Slot01         281            {0, 26, 0, -1}
+ Slot02         282            {0, 26, 1, -1}
+ Slot03         283            {0, 26, 2, -1}
+ Slot04         284            {0, 26, 3, -1}
+ Slot05         285            {0, 26, 4, -1}
+ Slot06         286            {0, 26, 5, -1}
+ Slot07         287            {0, 26, 6, -1}
+ Slot08         288            {0, 26, 7, -1}
+ Slot09         289            {0, 26, 8, -1}
+ Slot10         290            {0, 26, 9, -1}
+
+ [Personal05]
+ Slot01         291            {0, 27, 0, -1}
+ Slot02         292            {0, 27, 1, -1}
+ Slot03         293            {0, 27, 2, -1}
+ Slot04         294            {0, 27, 3, -1}
+ Slot05         295            {0, 27, 4, -1}
+ Slot06         296            {0, 27, 5, -1}
+ Slot07         297            {0, 27, 6, -1}
+ Slot08         298            {0, 27, 7, -1}
+ Slot09         299            {0, 27, 8, -1}
+ Slot10         300            {0, 27, 9, -1}
+
+ [Personal06]
+ Slot01         301            {0, 28, 0, -1}
+ Slot02         302            {0, 28, 1, -1}
+ Slot03         303            {0, 28, 2, -1}
+ Slot04         304            {0, 28, 3, -1}
+ Slot05         305            {0, 28, 4, -1}
+ Slot06         306            {0, 28, 5, -1}
+ Slot07         307            {0, 28, 6, -1}
+ Slot08         308            {0, 28, 7, -1}
+ Slot09         309            {0, 28, 8, -1}
+ Slot10         310            {0, 28, 9, -1}
+
+ [Personal07]
+ Slot01         311            {0, 29, 0, -1}
+ Slot02         312            {0, 29, 1, -1}
+ Slot03         313            {0, 29, 2, -1}
+ Slot04         314            {0, 29, 3, -1}
+ Slot05         315            {0, 29, 4, -1}
+ Slot06         316            {0, 29, 5, -1}
+ Slot07         317            {0, 29, 6, -1}
+ Slot08         318            {0, 29, 7, -1}
+ Slot09         319            {0, 29, 8, -1}
+ Slot10         320            {0, 29, 9, -1}
+
+ [Personal08]
+ Slot01         321            {0, 30, 0, -1}
+ Slot02         322            {0, 30, 1, -1}
+ Slot03         323            {0, 30, 2, -1}
+ Slot04         324            {0, 30, 3, -1}
+ Slot05         325            {0, 30, 4, -1}
+ Slot06         326            {0, 30, 5, -1}
+ Slot07         327            {0, 30, 6, -1}
+ Slot08         328            {0, 30, 7, -1}
+ Slot09         329            {0, 30, 8, -1}
+ Slot10         330            {0, 30, 9, -1}
+
+ [Personal09]
+ Slot01         [n/a]          {0, 31, 0, -1}
+ Slot02         [n/a]          {0, 31, 1, -1}
+ Slot03         [n/a]          {0, 31, 2, -1}
+ Slot04         [n/a]          {0, 31, 3, -1}
+ Slot05         [n/a]          {0, 31, 4, -1}
+ Slot06         [n/a]          {0, 31, 5, -1}
+ Slot07         [n/a]          {0, 31, 6, -1}
+ Slot08         [n/a]          {0, 31, 7, -1}
+ Slot09         [n/a]          {0, 31, 8, -1}
+ Slot10         [n/a]          {0, 31, 9, -1}
+
+ [Personal10]
+ Slot01         [n/a]          {0, 32, 0, -1}
+ Slot02         [n/a]          {0, 32, 1, -1}
+ Slot03         [n/a]          {0, 32, 2, -1}
+ Slot04         [n/a]          {0, 32, 3, -1}
+ Slot05         [n/a]          {0, 32, 4, -1}
+ Slot06         [n/a]          {0, 32, 5, -1}
+ Slot07         [n/a]          {0, 32, 6, -1}
+ Slot08         [n/a]          {0, 32, 7, -1}
+ Slot09         [n/a]          {0, 32, 8, -1}
+ Slot10         [n/a]          {0, 32, 9, -1}
+
+ [Cursor]
+ Slot01         331            {0, 33, 0, -1}
+ Slot02         332            {0, 33, 1, -1}
+ Slot03         333            {0, 33, 2, -1}
+ Slot04         334            {0, 33, 3, -1}
+ Slot05         335            {0, 33, 4, -1}
+ Slot06         336            {0, 33, 5, -1}
+ Slot07         337            {0, 33, 6, -1}
+ Slot08         338            {0, 33, 7, -1}
+ Slot09         339            {0, 33, 8, -1}
+ Slot10         340            {0, 33, 9, -1}
+
+ 
+ 
+ 
+ 
+ [Bank]
+ [Shared Bank]
+ [Trade] - Trade is a temporary server holding area and is not recognized by the client. A zone crash will leave items in the trade slots and
+           that needs to be accounted for when converting the database.
+ [Cursor Buffer] - Part of Main Slot Enumerations. Does not save bag contents data unless 8000 is occupied and slot 30 is not..then possibly
+                   stored in 331 - 340..however, could be invalid entries in this case if 8000 is not a bag...
+ 
+		// Bank bags 2031 - 2270
+		// Shared Bank bags 2531 - 2550
+		// Trade bags 3100 - 3179
+		// World bags? - uint8 Inventory::CalcBagIdx(int16 slot_id) accounts for them, but the other two converters do not...
+		// Cursor Buffer - 8000 - 8999, most likely. Max buffer is set to 0xFFFE, so 73,533 is the theoretical limit, but I've not seen items
+		//                 retrieved past 8101 ~ 8102..even with manual entries above this.

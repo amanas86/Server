@@ -90,6 +90,11 @@ ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges) {
 	m_SerialNumber = GetNextItemInstSerialNumber();
 }
 
+ManagedCursor::~ManagedCursor() // in-work
+{
+
+}
+
 ItemInstQueue::~ItemInstQueue() {
 	iter_queue cur,end;
 	cur = m_list.begin();
@@ -144,6 +149,11 @@ Inventory::~Inventory() {
 		safe_delete(tmp);
 	}
 	m_trade.clear();
+}
+
+InventoryLimits::~InventoryLimits()
+{
+	memcpy(this, 0, sizeof(InventoryLimits));
 }
 
 // Make a copy of an ItemInst object
@@ -474,6 +484,8 @@ ItemInst* ItemInst::PopItem(uint8 index)
 	// Return pointer that needs to be deleted (or otherwise managed)
 	return nullptr;
 }
+
+// <type> ManagedCursor::<function>() - Start
 
 // Put item onto back of queue
 void ItemInstQueue::push(ItemInst* inst)
@@ -1471,6 +1483,123 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 
 	// Not found
 	return SLOT_INVALID;
+}
+
+void InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
+{
+	limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS;
+	limits.m_slottypesize[SlotType_Bank]				= SIZE_BANK;
+	limits.m_slottypesize[SlotType_SharedBank]			= SIZE_SHAREDBANK;
+	limits.m_slottypesize[SlotType_Trade]				= SIZE_TRADE;
+	limits.m_slottypesize[SlotType_World]				= SIZE_WORLD;
+	limits.m_slottypesize[SlotType_Limbo]				= SIZE_LIMBO;
+	limits.m_slottypesize[SlotType_Tribute]				= SIZE_TRIBUTE;
+	limits.m_slottypesize[SlotType_TrophyTribute]		= SIZE_TROPHYTRIBUTE;
+	limits.m_slottypesize[SlotType_GuildTribute]		= SIZE_GUILDTRIBUTE;
+	limits.m_slottypesize[SlotType_Merchant]			= SIZE_MERCHANT;
+	limits.m_slottypesize[SlotType_Deleted]				= SIZE_DELETED;
+	limits.m_slottypesize[SlotType_Corpse]				= SIZE_CORPSE;
+	limits.m_slottypesize[SlotType_Bazaar]				= SIZE_BAZAAR;
+	limits.m_slottypesize[SlotType_Inspect]				= SIZE_INSPECT;
+	limits.m_slottypesize[SlotType_RealEstate]			= SIZE_REALESTATE;
+	limits.m_slottypesize[SlotType_ViewMODPC]			= SIZE_VIEWMODPC;
+	limits.m_slottypesize[SlotType_ViewMODBank]			= SIZE_VIEWMODBANK;
+	limits.m_slottypesize[SlotType_ViewMODSharedBank]	= SIZE_VIEWMODSHAREDBANK;
+	limits.m_slottypesize[SlotType_ViewMODLimbo]		= SIZE_VIEWMODLIMBO;
+	limits.m_slottypesize[SlotType_AltStorage]			= SIZE_ALTSTORAGE;
+	limits.m_slottypesize[SlotType_Archived]			= SIZE_ARCHIVED;
+	limits.m_slottypesize[SlotType_Mail]				= SIZE_MAIL;
+	limits.m_slottypesize[SlotType_GuildTrophyTribute]	= SIZE_GUILDTROPHYTRIBUTE;
+	limits.m_slottypesize[SlotType_Krono]				= SIZE_KRONO;
+	limits.m_slottypesize[SlotType_Other]				= SIZE_OTHER;
+
+	limits.m_equipmentstart								= EQUIPMENT_START;
+	limits.m_equipmentend								= EQUIPMENT_END;
+	limits.m_equipmentbitmask							= EQUIPMENT_BITMASK;
+	limits.m_personalstart								= PERSONAL_START;
+	limits.m_personalend								= PERSONAL_END;
+	limits.m_personalbitmask							= PERSONAL_BITMASK;
+
+	limits.m_bandolierslotsmax							= MAX_BANDOLIERSLOTS;
+	limits.m_potionbeltslotsmax							= MAX_POTIONBELTSLOTS;
+	limits.m_bagslotsmax								= MAX_BAGSLOTS;
+	limits.m_augmentsmax								= MAX_AUGMENTS;
+}
+
+void InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
+{
+	SetServerInventoryLimits(limits);
+	
+	// Non-Client slot type sizes (Set slot types unused by NPC to SIZE_UNUSED)
+	limits.m_slottypesize[SlotType_Bank]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_SharedBank]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_World]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Limbo]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Deleted]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_RealEstate]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_ViewMODPC]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_ViewMODBank]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_ViewMODSharedBank]	= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_ViewMODLimbo]		= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_AltStorage]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Archived]			= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Mail]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Krono]				= SIZE_UNUSED;
+	limits.m_slottypesize[SlotType_Other]				= SIZE_UNUSED;
+}
+
+void InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version)
+{
+	SetServerInventoryLimits(limits);
+	
+	// Client slot type sizes (Set slot types unused by client to SIZE_UNUSED)
+
+	// Add new clients in descending order
+	if(client_version < EQClientRoF)
+	{
+		limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS_PRE_ROF;
+		limits.m_slottypesize[SlotType_Corpse]				= SIZE_CORPSE_PRE_ROF;
+		limits.m_slottypesize[SlotType_Bazaar]				= SIZE_BAZAAR_PRE_ROF;
+			
+		limits.m_personalend								= PERSONAL_END_PRE_ROF;
+		limits.m_personalbitmask							= PERSONAL_BITMASK_PRE_ROF;
+
+		limits.m_bagslotsmax								= MAX_BAGSLOTS_PRE_ROF;
+		limits.m_augmentsmax								= MAX_AUGMENTS_PRE_ROF;
+	}
+
+	if(client_version < EQClientUnderfoot)
+	{
+
+	}
+
+	if(client_version < EQClientSoD)
+	{
+
+	}
+
+	if(client_version < EQClientSoF)
+	{
+		limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS_PRE_SOF;
+		limits.m_slottypesize[SlotType_Corpse]				= SIZE_CORPSE_PRE_SOF;
+		limits.m_slottypesize[SlotType_Bank]				= SIZE_BANK_PRE_SOF;
+
+		limits.m_equipmentbitmask							= EQUIPMENT_BITMASK_PRE_SOF;
+	}
+
+	if(client_version < EQClientTitanium)
+	{
+		limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS_PRE_TI;
+		limits.m_slottypesize[SlotType_Corpse]				= SIZE_CORPSE_PRE_TI;
+
+		limits.m_equipmentbitmask							= EQUIPMENT_BITMASK_PRE_TI;
+	}
+
+	if(client_version < EQClient62)
+	{
+		// If we got here, we screwed the pooch somehow...
+		// TODO: log error message
+	}
 }
 
 bool ItemInst::IsSlotAllowed(int16 slot_id) const {

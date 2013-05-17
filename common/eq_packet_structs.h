@@ -5058,6 +5058,15 @@ struct MercenaryMerchantResponse_Struct {
 /*0004*/
 };
 
+struct InventorySlot_Struct {
+	int16 slottype;
+	int16 unknown02;
+	int16 mainslot;
+	int16 subslot;
+	int16 augslot;
+	int16 unknown01;
+};
+
 struct ServerLootItem_Struct {
 	uint32	item_id;
 	int16	equipSlot;

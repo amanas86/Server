@@ -1,0 +1,54 @@
+EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
+----------------------------------------------------------------
+
+-- Convert inventory system from a linear model to a multi-dimensional model, using the RoF moveitem struct as an example:
+	struct InventorySlot_Struct
+	{
+		int16 slottype
+		int16 unknown02
+		int16 mainslot
+		int16 subslot
+		int16 augslot
+		int16 unknown01
+	};
+	
+	The acutal model is {slottype, mainslot, subslot, augslot}. The extra fields are in place to avoid unnecessary conversions.
+	
+	(Need to test if unix timestamps are still sent using OP_MoveItem.)
+
+-- Incorporate a 'managed cursor' to replace the current ItemInstQueue method. Ensure that we use the client response of
+   [<OP_MoveItem> from: cursor, to: cursor] to trigger movement and client updates to avoid desyncs (like we currently have.)
+   Note: Hopefully, this will resolve the last of the major desyncs of the old system.
+
+-- Develop an 'InventoryLimits' system to allow direct access to client-based slot limitations..reducing, or eliminating the
+   need to use 'ClientVersion' checks in the inventory code.
+
+-- Convert all related inventory functions, where appropriate, to struct-based arguments from int16-based.
+
+-- Add overload functions of the same type (as above, where appropriate) to handle calls from scripted requests using the old
+   linear system. These should really be pre-processors that relay results to and from the primary function. (They can be added
+   as 'depricated' with the intent of converting existing scripts, or left in situ.)
+
+-- Remove existing slot conversion code. Bag locations are built into the new struct and are no longer needed. New (or repurposed
+   existing) functions will need to be added to translate to and from the models for the above overloads.
+
+-- Change all calling functions to use the new parameter structure. (There's alot...)
+
+-- Convert inventory tables in database to new model (players, bots, corpses, etc...) 'Ammo' and 'Power Source' need to moved to
+   their proper slots (22 & 21 versus the current 21 & 9999.) [See slotconversion.txt for more information.]
+
+-- Bitfields for slots 21 & 22 need to be reversed in the main item database. This will allow direct comparison to the
+   ItemInst::IsSlotAllowed bit-mask instead of compensating in code.
+
+-- Move augmentations from item instance field entry to individual inventory entries in the table. [See slotconversion.txt for more
+   information.]
+
+-- Augmentation code will need to be modified as well. (These changes should set us up to implement 'Ornamentations' as some point.)
+
+-- Remove (or modify) corpse inventory blob to a separate table using the new model. Also, add an 'attuned' field to the table and
+   appropriate server code.
+
+-- Consider moving serialization to client patch code. This will eliminate the serialization -> de-serialization -> re-serialization
+   that we currently perform. (Debateable...)
+
+-- Anything else that needs to be added, deleted, or modified...

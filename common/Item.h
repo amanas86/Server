@@ -24,6 +24,8 @@
 #define __ITEM_H
 
 class ItemInst;				// Item belonging to a client (contains info on item, dye, augments, charges, etc)
+class ManagedCursor;		// Cursor management class - replaces ItemInstQueue
+class InventoryLimits;		// Client-based limits class
 class ItemInstQueue;		// Queue of ItemInst objects (i.e., cursor)
 class Inventory;			// Character inventory
 class ItemParse;			// Parses item packets
@@ -38,6 +40,7 @@ using namespace std;
 #include "../common/eq_packet_structs.h"
 #include "../common/eq_constants.h"
 #include "../common/item_struct.h"
+#include "../common/clientversions.h"
 
 // Helper typedefs
 typedef list<ItemInst*>::const_iterator					iter_queue;
@@ -54,6 +57,7 @@ namespace ItemField {
 	};
 };
 
+// Depricated #defines -U
 // Indexing positions to the beginning slot_id's for a bucket of slots
 #define IDX_EQUIP		0
 #define IDX_CURSOR_BAG	331
@@ -82,7 +86,7 @@ typedef enum {
 	byFlagNotSet	//apply action if the flag is NOT set
 } byFlagSetting;
 
-
+// Left in situ until deemed no longer needed (currently used for legacy scripting) -U
 //FatherNitwit: location bits for searching specific
 //places with HasItem() and HasItemByUse()
 enum {
@@ -94,7 +98,84 @@ enum {
 	invWhereCursor		= 0x20
 };
 
+enum InvWhereLocation
+{
+	InvWhereNull			= 0x00000000,
+	InvWhereEquipment		= 0x00000001, // worn equipment
+	InvWherePersonal		= 0x00000002, // carried equipment
+	InvWhereCursor			= 0x00000004, // visible cursor only
+	InvWherePossessions		= 0x00000007,
+	InvWhereBank			= 0x00000008,
+	InvWhereSharedBank		= 0x00000010,
+	InvWhereTrade			= 0x00000020,
+	InvWhereWorld			= 0x00000040,
+	InvWhereLimbo			= 0x00000080,
+	InvWhereTribute			= 0x00000100,
+	InvWhereTrophyTribute	= 0x00000200,
+	InvWhereDeleted			= 0x00000400, // delete buyback?
+	InvWhereRealEstate		= 0x00000800,
+	InvWhereAltStorage		= 0x00001000, // tokenized bag storage?
+	InvWhereArchived		= 0x00002000, // tokenized bag storage?
+	InvWhereMail			= 0x00004000,
+	InvWhereKrono			= 0x00008000,
+	InvWhereOther			= 0x00010000,
+	InvWhereAll				= 0xFFFFFFFF
+};
 
+class ManagedCursor
+{
+public:
+	~ManagedCursor();
+
+private:
+
+};
+ 
+class InventoryLimits // in-work
+{
+public:
+	virtual ~InventoryLimits();
+
+	static void		SetServerInventoryLimits(InventoryLimits &limits);
+	static void		SetMobInventoryLimits(InventoryLimits &limits);
+	static void		SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown);
+
+	inline int16	GetSlotTypeSize(int16 slottype)	const { return (slottype >= 0 && slottype < SlotType_Count) ? m_slottypesize[slottype] : 0; }
+	inline const int16 operator[](int16 slottype)	const { return GetSlotTypeSize(slottype); }
+
+	inline int16	GetEquipmentStart()				const { return m_equipmentstart; }
+	inline int16	GetEquipmentEnd()				const { return m_equipmentend; }
+	inline uint32	GetEquipmentBitMask()			const { return m_equipmentbitmask; }
+	inline int16	GetPersonalStart()				const { return m_personalstart; }
+	inline int16	GetPersonalEnd()				const { return m_personalend; }
+	inline uint32	GetPersonalBitMask()			const { return m_personalbitmask; }
+
+	inline uint8	GetBandolierSlotsMax()			const { return m_bandolierslotsmax; }
+	inline uint8	GetPotionBeltSlotsMax()			const { return m_potionbeltslotsmax; }
+	inline uint8	GetBagSlotsMax()				const { return m_bagslotsmax; }
+	inline uint8	GetAugmentsMax()				const { return m_augmentsmax; }
+	
+	// Not sure on the use of these..would save a little coding space if used.
+//	static void		InvalidateISStruct(InventorySlot_Struct &is_struct);
+//	static bool		IsInvalidISStruct(const InventorySlot_Struct &is_struct);
+
+protected:
+	int16			m_slottypesize[SlotType_Count];
+
+	int16			m_equipmentstart;
+	int16			m_equipmentend;
+	uint32			m_equipmentbitmask;
+	int16			m_personalstart;
+	int16			m_personalend;
+	uint32			m_personalbitmask;
+
+	uint8			m_bandolierslotsmax;
+	uint8			m_potionbeltslotsmax;
+	uint8			m_bagslotsmax;
+	uint8			m_augmentsmax;
+};
+
+// Depricated class -U
 // ########################################
 // Class: Queue
 //	Queue that allows a read-only iterator
@@ -203,6 +284,12 @@ public:
 	void SetCustomItemData(uint32 character_id, int16 slot_id, std::string identifier, float value);
 	void SetCustomItemData(uint32 character_id, int16 slot_id, std::string identifier, bool value);
 	std::string GetCustomItemData(int16 slot_id, std::string identifier);
+
+	//InventoryLimits	Limit;
+
+	inline InventoryLimits& GetLimits()				{ return m_limits; }
+	inline const InventoryLimits& GetLimits() const	{ return m_limits; }
+
 protected:
 	///////////////////////////////
 	// Protected Methods
@@ -226,10 +313,38 @@ protected:
 	// Player inventory
 	map<int16, ItemInst*>	m_worn;		// Items worn by character
 	map<int16, ItemInst*>	m_inv;		// Items in character personal inventory
-	map<int16, ItemInst*>	m_bank;		// Items in character bank
+	//map<int16, ItemInst*>	m_bank;		// Items in character bank
 	map<int16, ItemInst*>	m_shbank;	// Items in character shared bank
-	map<int16, ItemInst*>	m_trade;	// Items in a trade session
+	//map<int16, ItemInst*>	m_trade;	// Items in a trade session
 	ItemInstQueue			m_cursor;	// Items on cursor: FIFO
+
+	map<int16, ItemInst*>	m_possessions;			// type 0 - combined equipment, personal and cursor
+	map<int16, ItemInst*>	m_bank;					// type 1
+	map<int16, ItemInst*>	m_sharedbank;			// type 2
+	map<int16, ItemInst*>	m_trade;				// type 3
+	map<int16, ItemInst*>	m_world;				// type 4
+	map<int16, ItemInst*>	m_limbo;				// type 5 - aka cursor buffer
+	map<int16, ItemInst*>	m_tribute;				// type 6
+	map<int16, ItemInst*>	m_trophytribute;		// type 7 - not yet implemented
+	map<int16, ItemInst*>	m_guildtribute;			// type 8 - not yet implemented, generated from guild entity?
+	map<int16, ItemInst*>	m_merchant;				// type 9 - generated from target?
+	map<int16, ItemInst*>	m_deleted;				// type 10 - unknown, possibly deleted item storage?
+	map<int16, ItemInst*>	m_corpse;				// type 11 - generated from target?
+	map<int16, ItemInst*>	m_bazaar;				// type 12 - generated from target?
+	map<int16, ItemInst*>	m_inspect;				// type 13 - generated from target?
+	map<int16, ItemInst*>	m_realestate;			// type 14 - not yet implemented
+	map<int16, ItemInst*>	m_viewmodpc;			// type 15 - unknown, possibly gm-related?
+	map<int16, ItemInst*>	m_viewmodbank;			// type 16 - unknown, possibly gm-related?
+	map<int16, ItemInst*>	m_viewmodsharedbank;	// type 17 - unknown, possibly gm-related?
+	map<int16, ItemInst*>	m_viewmodlimbo;			// type 18 - unknown, possibly gm-related?
+	map<int16, ItemInst*>	m_altstorage;			// type 19 - unknown
+	map<int16, ItemInst*>	m_archived;				// type 20 - unknown, possibly deleted item or tokenized bag storage?
+	map<int16, ItemInst*>	m_mail;					// type 21 - not yet implemented
+	map<int16, ItemInst*>	m_guildtrophytribute;	// type 22 - not yet implemented, generated from guild entity?
+	map<int16, ItemInst*>	m_krono;				// type 23
+	map<int16, ItemInst*>	m_other;				// type 24 - unknown
+
+	InventoryLimits			m_limits;				// client-based inventory limits
 };
 
 class SharedDatabase;

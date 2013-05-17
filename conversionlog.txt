@@ -1,0 +1,18 @@
+EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
+--------------------------------------------------------------
+Status: NOT COMPILABLE
+--------------------------------------------------------------
+== 05/16/2013 ==
+Uleat: Created branch 'inventory_conversion' based on Revision 312100e (commit 265)
+Uleat: Added 'InventorySlot_Struct'
+Uleat: Added new InvWhereLocation bitmask enumeration. Will be adjusted as necessary
+Uleat: Initiated a Managed Cursor class..still in development
+Uleat: Initiated an Inventory Limits class..still in development
+Uleat: Remodeled Inventory storage maps to include all known client slot types. A lot will be removed after initial testing
+Uleat: Added new InventorySlotTypes enumeration
+Uleat: Added new InventoryPossessions enumeration. Replaces the old InventorySlot enumeration..but not depricated as yet
+Uleat: Added some inventory limit definitions..will be refined as developed (needs client research to determine values)
+
+NOTE: InventoryLimits is presented as designed..features can be added as/if needed. The #defines for client assignment still need
+      some work, as well as the per-client conditional checks. I will show examples in the code as I alter and adapt functions.
+	  If there's an issue with using the initializers as static, I'll change them back to instanced -U

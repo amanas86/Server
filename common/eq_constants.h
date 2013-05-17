@@ -577,17 +577,201 @@ static const uint8 SkillDamageTypes[HIGHEST_SKILL+1] = {
 ** Inventory Slot Equipment Enum
 ** Mostly used for third-party tools to reference inventory slots
 **
+** [pre-HoT]
 ** NOTE: Numbering for personal inventory goes top to bottom, then left to right
 **	It's the opposite for inside bags: left to right, then top to bottom
 **	Example:
 **	inventory:	containers:
-**	1 6			1 2
-**	2 7			3 4
-**	3 8			5 6
-**	4 9			7 8
-**	5 10		9 10
+**	1  6			1  2
+**	2  7			3  4
+**	3  8			5  6
+**	4  9			7  8
+**	5  10			9  10
+**
+** [HoT and higher]
+** NOTE: Numbering for personal inventory goes left to right, then to to bottom
+**  for both inventory and bags.
+**  Example:
+**	inventory:	containers:
+**	1  2			1  2
+**	3  4			3  4
+**	5  6			5  6
+**	7  8			7  8
+**	9  10			9  10
+**  11 12			11 12	[NOTE: Additional slots are only available in RoF and higher]
 **
 */
+
+// These enumerations should not change unless the database is changed to match
+enum InventorySlotTypes
+{
+	SlotType_Possessions		= 0,
+	SlotType_Bank				= 1,
+	SlotType_SharedBank			= 2,
+	SlotType_Trade				= 3,
+	SlotType_World				= 4,
+	SlotType_Limbo				= 5,
+	SlotType_Tribute			= 6,
+	SlotType_TrophyTribute		= 7,
+	SlotType_GuildTribute		= 8,
+	SlotType_Merchant			= 9,
+	SlotType_Deleted			= 10,
+	SlotType_Corpse				= 11,
+	SlotType_Bazaar				= 12,
+	SlotType_Inspect			= 13,
+	SlotType_RealEstate			= 14,
+	SlotType_ViewMODPC			= 15,
+	SlotType_ViewMODBank		= 16,
+	SlotType_ViewMODSharedBank	= 17,
+	SlotType_ViewMODLimbo		= 18,
+	SlotType_AltStorage			= 19,
+	SlotType_Archived			= 20,
+	SlotType_Mail				= 21,
+	SlotType_GuildTrophyTribute	= 22,
+	SlotType_Krono				= 23,
+	SlotType_Other				= 24,
+	SlotType_Count				= 25
+};
+
+enum InventoryPossessions
+{	
+	Slot_Charm			= 0,
+	Slot_Ear01			= 1,
+	Slot_Head			= 2,
+	Slot_Face			= 3,
+	Slot_Ear02			= 4,
+	Slot_Neck			= 5,
+	Slot_Shoulder		= 6,
+	Slot_Arms			= 7,
+	Slot_Back			= 8,
+	Slot_Bracer01		= 9,
+	Slot_Bracer02		= 10,
+	Slot_Range			= 11,
+	Slot_Hands			= 12,
+	Slot_Primary		= 13,
+	Slot_Secondary		= 14,
+	Slot_Ring01			= 15,
+	Slot_Ring02			= 16,
+	Slot_Chest			= 17,
+	Slot_Legs			= 18,
+	Slot_Feet			= 19,
+	Slot_Waist			= 20,
+	Slot_PowerSource	= 21,
+	Slot_Ammo			= 22,
+	Slot_Personal01		= 23,
+	Slot_Personal02		= 24,
+	Slot_Personal03		= 25,
+	Slot_Personal04		= 26,
+	Slot_Personal05		= 27,
+	Slot_Personal06		= 28,
+	Slot_Personal07		= 29,
+	Slot_Personal08		= 30,
+	Slot_Personal09		= 31,
+	Slot_Personal10		= 32,
+	Slot_Cursor			= 33,
+	Slot_Count			= 34
+};
+
+#define SIZE_UNUSED					0
+
+#define SIZE_POSSESSIONS			34
+#define SIZE_POSSESSIONS_PRE_ROF	32
+#define SIZE_POSSESSIONS_PRE_SOF	31
+#define SIZE_POSSESSIONS_PRE_TI		30
+
+#define SIZE_BANK					24
+#define SIZE_BANK_PRE_SOF			16
+
+#define SIZE_SHAREDBANK				2
+
+#define SIZE_TRADE					8
+#define SIZE_TRADE_NPC				4
+
+#define SIZE_WORLD					10
+
+#define SIZE_LIMBO					36
+
+#define SIZE_TRIBUTE				0 // unknown atm
+
+#define SIZE_TROPHYTRIBUTE			0 // unknown atm
+
+#define SIZE_GUILDTRIBUTE			0 // unknown atm
+
+#define SIZE_MERCHANT				0 // unknown atm
+
+#define SIZE_DELETED				0 // unknown atm
+
+#define SIZE_CORPSE					36
+#define SIZE_CORPSE_PRE_ROF			34
+#define SIZE_CORPSE_PRE_SOF			33
+#define SIZE_CORPSE_PRE_TI			32
+
+#define SIZE_BAZAAR					200
+#define SIZE_BAZAAR_PRE_ROF			80
+
+#define SIZE_INSPECT				0 // unknown atm
+
+#define SIZE_REALESTATE				0 // unknown atm
+
+#define SIZE_VIEWMODPC				0 // unknown atm
+
+#define SIZE_VIEWMODBANK			0 // unknown atm
+
+#define SIZE_VIEWMODSHAREDBANK		0 // unknown atm
+
+#define SIZE_VIEWMODLIMBO			0 // unknown atm
+
+#define SIZE_ALTSTORAGE				0 // unknown atm
+
+#define SIZE_ARCHIVED				0 // unknown atm
+
+#define SIZE_MAIL					0 // unknown atm
+
+#define SIZE_GUILDTROPHYTRIBUTE		0 // unknown atm
+
+#define SIZE_KRONO					1
+#define SIZE_KRONO_PRE_ROF			0
+
+#define SIZE_OTHER					0 // unknown atm
+
+#define EQUIPMENT_START				(int16)0
+#define EQUIPMENT_END				(int16)22
+#define EQUIPMENT_BITMASK			(uint32)0x007FFFFF // (charm thru ammo)
+#define EQUIPMENT_BITMASK_PRE_SOF	(uint32)0x005FFFFF // (charm thru ammo, less power source)
+#define EQUIPMENT_BITMASK_PRE_TI	(uint32)0x005FFFFE // (charm thru ammo, less power source and charm) (is charm slot in 6.2?)
+
+#define PERSONAL_START				(int16)23
+#define PERSONAL_END				(int16)34
+#define PERSONAL_END_PRE_ROF		(int16)32
+#define PERSONAL_BITMASK			(uint32)0x00000FFF // (personal 1 thru 10)
+#define PERSONAL_BITMASK_PRE_ROF	(uint32)0x000003FF // (personal 1 thru 8)
+
+#define MAX_BANDOLIERSLOTS			(uint8)20
+
+#define MAX_POTIONBELTSLOTS			(uint8)0
+
+#define MAX_BAGSLOTS				(uint8)255 // 0 - 254: may have to change if game bag sizes include 256
+#define MAX_BAGSLOTS_PRE_ROF		(uint8)10
+
+#define MAX_AUGMENTS				(uint8)6
+#define MAX_AUGMENTS_PRE_ROF		(uint8)5
+
+#define SLOTTYPE_START				0
+#define MAINSLOT_START				0
+#define SUBSLOT_START				0
+#define AUGSLOT_START				0
+
+#define SLOTTYPE_INVALID			(int16)0xFFFF
+#define MAINSLOT_INVALID			(int16)0xFFFF
+#define SUBSLOT_INVALID				(int16)0xFFFF
+#define AUGSLOT_INVALID				(int16)0xFFFF
+
+#define BANDOLIER_INVALID			(uint8)0xFF
+#define POTIONBELT_INVALID			(uint8)0xFF
+#define BAG_INVALID					(uint8)0xFF // may not be usable - want '-1' used as invalid
+#define AUGMENT_INVALID				(uint8)0xFF
+
+// U: Legacy enumeration..will be deleted
 enum InventorySlot
 {
 	////////////////////////
