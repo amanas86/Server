@@ -1,6 +1,5 @@
 EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
 ----------------------------------------------------------------
-
 -- Convert inventory system from a linear model to a multi-dimensional model, using the RoF moveitem struct as an example:
 	struct InventorySlot_Struct
 	{

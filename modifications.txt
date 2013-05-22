@@ -1,0 +1,92 @@
+EQEMu Inventory Modifications (Started on May 20, 2013 02:33)
+-------------------------------------------------------------
+[Client]
+public:
++	IsValidSlotStruct(InventorySlot_Struct &is_struct)
++	IsValidServerSlotStruct(InventorySlot_Struct &is_struct)
+
+[Inventory]
+public:
++	InvalidateSlotStruct(InventorySlot_Struct &is_struct)
++	IsValidServerSlotStruct(InventorySlot_Struct &is_struct)
++	IsValidMobSlotStruct(InventorySlot_Struct &is_struct)
++	IsValidClientSlotStruct(InventorySlot_Struct &is_struct)
++	IsDeleteRequest(InventorySlot_Struct &is_struct)
++	GetLimits()
++	GetLimits() (const)
++	IsLimitsSet()
+protected:
++	map<int16, ItemInst*> m_possessions
++	map<int16, ItemInst*> m_bank
++	map<int16, ItemInst*> m_sharedbank
++	map<int16, ItemInst*> m_trade
++	map<int16, ItemInst*> m_world
++	map<int16, ItemInst*> m_limbo
++	map<int16, ItemInst*> m_tribute
++	map<int16, ItemInst*> m_trophytribute
++	map<int16, ItemInst*> m_guildtribute
++	map<int16, ItemInst*> m_merchant
++	map<int16, ItemInst*> m_deleted
++	map<int16, ItemInst*> m_corpse
++	map<int16, ItemInst*> m_bazaar
++	map<int16, ItemInst*> m_inspect
++	map<int16, ItemInst*> m_realestate
++	map<int16, ItemInst*> m_viewmodpc
++	map<int16, ItemInst*> m_viewmodbank
++	map<int16, ItemInst*> m_viewmodsharedbank
++	map<int16, ItemInst*> m_viewmodlimbo
++	map<int16, ItemInst*> m_altstorage
++	map<int16, ItemInst*> m_archived
++	map<int16, ItemInst*> m_mail
++	map<int16, ItemInst*> m_guildtrophytribute
++	map<int16, ItemInst*> m_krono
++	map<int16, ItemInst*> m_other
++	InventoryLimits m_limits
+
+
++[ManagedCursor]
+public:
+protected:
+
++[InventoryLimits]
+public:
++	~InventoryLimits()
++	SetServerInventoryLimits(InventoryLimits &limits)
++	SetMobInventoryLimits(InventoryLimits &limits)
++	SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown)
++	ResetInventoryLimits()
++	IsLimitsSet()
++	GetSlotTypeSize(int16 slottype)
++	operator[](int16 slottype)
++	GetEquipmentStart()	
++	GetEquipmentEnd()
++	GetEquipmentBitMask()
++	GetPersonalStart()
++	GetPersonalEnd()
++	GetPersonalBitMask()
++	GetBandolierSlotsMax()
++	GetPotionBeltSlotsMax()
++	GetBagSlotsMax()
++	GetAugmentsMax()
+protected:
++	int16 m_slottypesize[SlotType_Count]
++	int16 m_equipmentstart
++	int16 m_equipmentend
++	int16 m_equipmentbitmask
++	int16 m_personalstart
++	int16 m_personalend
++	int16 m_personalbitmask
++	int16 m_bandolierslotsmax
++	int16 m_potionbeltslotsmax
++	int16 m_bagslotsmax
++	int16 m_augmentsmax	
+private:
++	bool limits_set
+
+
++	enum InvWhereLocation
++	enum InventorySlotTypes
++	enum InventoryPossessions
+
++	struct InventorySlot_Struct
+

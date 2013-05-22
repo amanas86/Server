@@ -90,7 +90,7 @@ ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges) {
 	m_SerialNumber = GetNextItemInstSerialNumber();
 }
 
-ManagedCursor::~ManagedCursor() // in-work
+ManagedCursor::~ManagedCursor()
 {
 
 }
@@ -1485,8 +1485,10 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 	return SLOT_INVALID;
 }
 
-void InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
+bool InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
 {
+	if(limits.limits_set) { return false; }
+	
 	limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS;
 	limits.m_slottypesize[SlotType_Bank]				= SIZE_BANK;
 	limits.m_slottypesize[SlotType_SharedBank]			= SIZE_SHAREDBANK;
@@ -1524,10 +1526,16 @@ void InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
 	limits.m_potionbeltslotsmax							= MAX_POTIONBELTSLOTS;
 	limits.m_bagslotsmax								= MAX_BAGSLOTS;
 	limits.m_augmentsmax								= MAX_AUGMENTS;
+
+	limits.limits_set = true;
+
+	return true;
 }
 
-void InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
+bool InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
 {
+	if(limits.limits_set) { return false; }
+
 	SetServerInventoryLimits(limits);
 	
 	// Non-Client slot type sizes (Set slot types unused by NPC to SIZE_UNUSED)
@@ -1546,10 +1554,16 @@ void InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
 	limits.m_slottypesize[SlotType_Mail]				= SIZE_UNUSED;
 	limits.m_slottypesize[SlotType_Krono]				= SIZE_UNUSED;
 	limits.m_slottypesize[SlotType_Other]				= SIZE_UNUSED;
+
+	limits.limits_set = true;
+
+	return true;
 }
 
-void InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version)
+bool InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version)
 {
+	if(limits.limits_set) { return false; }
+	
 	SetServerInventoryLimits(limits);
 	
 	// Client slot type sizes (Set slot types unused by client to SIZE_UNUSED)
@@ -1600,6 +1614,10 @@ void InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClient
 		// If we got here, we screwed the pooch somehow...
 		// TODO: log error message
 	}
+
+	limits.limits_set = true;
+
+	return true;
 }
 
 bool ItemInst::IsSlotAllowed(int16 slot_id) const {
@@ -1651,6 +1669,59 @@ bool ItemInst::IsAugmented()
 	for(int i = 0; i < MAX_AUGMENT_SLOTS; ++i)
 		if (GetAugmentItemID(i))
 			return true;
+
+	return false;
+}
+
+void Inventory::InvalidateSlotStruct(InventorySlot_Struct &is_struct)
+{
+	is_struct.slottype = SLOTTYPE_INVALID;
+	is_struct.unknown02 = 0;
+	is_struct.mainslot = MAINSLOT_INVALID;
+	is_struct.subslot = SUBSLOT_INVALID;
+	is_struct.augslot = AUGSLOT_INVALID;
+	is_struct.unknown01 = 0;
+}
+
+bool Inventory::IsValidServerSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return false; }
+
+	// in-work
+
+	return false;
+}
+
+bool Inventory::IsValidMobSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return true; }
+
+	// in-work
+
+	return false;
+}
+bool Inventory::IsValidClientSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return true; }
+
+	// in-work
+
+	return false;
+}
+
+// This is only valid for clients and mobs. This position does not exist on the server
+bool Inventory::IsDeleteRequest(InventorySlot_Struct &is_struct)
+{
+	if(is_struct.slottype == SLOTTYPE_INVALID &&
+		is_struct.mainslot == MAINSLOT_INVALID &&
+		is_struct.subslot == SUBSLOT_INVALID &&
+		is_struct.augslot == AUGSLOT_INVALID) { return true; }
 
 	return false;
 }

@@ -1,6 +1,5 @@
 EQEmu Inventory Slot Conversion
 -------------------------------
-
 [Quick Guide for New Slot Structure]
 {slottype, mainslot, subslot, augslot}
 

@@ -131,33 +131,32 @@ private:
 
 };
  
-class InventoryLimits // in-work
+class InventoryLimits
 {
 public:
 	virtual ~InventoryLimits();
 
-	static void		SetServerInventoryLimits(InventoryLimits &limits);
-	static void		SetMobInventoryLimits(InventoryLimits &limits);
-	static void		SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown);
-
-	inline int16	GetSlotTypeSize(int16 slottype)	const { return (slottype >= 0 && slottype < SlotType_Count) ? m_slottypesize[slottype] : 0; }
-	inline const int16 operator[](int16 slottype)	const { return GetSlotTypeSize(slottype); }
-
-	inline int16	GetEquipmentStart()				const { return m_equipmentstart; }
-	inline int16	GetEquipmentEnd()				const { return m_equipmentend; }
-	inline uint32	GetEquipmentBitMask()			const { return m_equipmentbitmask; }
-	inline int16	GetPersonalStart()				const { return m_personalstart; }
-	inline int16	GetPersonalEnd()				const { return m_personalend; }
-	inline uint32	GetPersonalBitMask()			const { return m_personalbitmask; }
-
-	inline uint8	GetBandolierSlotsMax()			const { return m_bandolierslotsmax; }
-	inline uint8	GetPotionBeltSlotsMax()			const { return m_potionbeltslotsmax; }
-	inline uint8	GetBagSlotsMax()				const { return m_bagslotsmax; }
-	inline uint8	GetAugmentsMax()				const { return m_augmentsmax; }
+	static bool		SetServerInventoryLimits(InventoryLimits &limits);
+	static bool		SetMobInventoryLimits(InventoryLimits &limits);
+	static bool		SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown);
 	
-	// Not sure on the use of these..would save a little coding space if used.
-//	static void		InvalidateISStruct(InventorySlot_Struct &is_struct);
-//	static bool		IsInvalidISStruct(const InventorySlot_Struct &is_struct);
+	inline void		ResetInventoryLimits() { memcpy(this, 0, sizeof(InventoryLimits)); limits_set = false; }
+	inline bool		IsLimitsSet() { return limits_set; }
+
+	inline int16	GetSlotTypeSize(int16 slot_type)	const { return (slot_type >= SLOTTYPE_START && slot_type < SlotType_Count) ? m_slottypesize[slot_type] : 0; }
+	inline const int16	operator[](int16 slot_type)		const { return GetSlotTypeSize(slot_type); }
+
+	inline int16	GetEquipmentStart()					const { return m_equipmentstart; }
+	inline int16	GetEquipmentEnd()					const { return m_equipmentend; }
+	inline uint32	GetEquipmentBitMask()				const { return m_equipmentbitmask; }
+	inline int16	GetPersonalStart()					const { return m_personalstart; }
+	inline int16	GetPersonalEnd()					const { return m_personalend; }
+	inline uint32	GetPersonalBitMask()				const { return m_personalbitmask; }
+
+	inline uint8	GetBandolierSlotsMax()				const { return m_bandolierslotsmax; }
+	inline uint8	GetPotionBeltSlotsMax()				const { return m_potionbeltslotsmax; }
+	inline uint8	GetBagSlotsMax()					const { return m_bagslotsmax; }
+	inline uint8	GetAugmentsMax()					const { return m_augmentsmax; }
 
 protected:
 	int16			m_slottypesize[SlotType_Count];
@@ -173,6 +172,9 @@ protected:
 	uint8			m_potionbeltslotsmax;
 	uint8			m_bagslotsmax;
 	uint8			m_augmentsmax;
+
+private:
+	bool			limits_set;
 };
 
 // Depricated class -U
@@ -285,10 +287,18 @@ public:
 	void SetCustomItemData(uint32 character_id, int16 slot_id, std::string identifier, bool value);
 	std::string GetCustomItemData(int16 slot_id, std::string identifier);
 
-	//InventoryLimits	Limit;
+	// Inventory helpers
+	static void InvalidateSlotStruct(InventorySlot_Struct &is_struct);
+	static bool IsValidServerSlotStruct(InventorySlot_Struct &is_struct);
+	static bool IsValidMobSlotStruct(InventorySlot_Struct &is_struct);
+	static bool IsValidClientSlotStruct(InventorySlot_Struct &is_struct);
+	static bool IsDeleteRequest(InventorySlot_Struct &is_struct);
 
+	// InventoryLimits Accessors
 	inline InventoryLimits& GetLimits()				{ return m_limits; }
 	inline const InventoryLimits& GetLimits() const	{ return m_limits; }
+
+	inline bool IsLimitsSet()						{ return m_limits.IsLimitsSet(); }
 
 protected:
 	///////////////////////////////

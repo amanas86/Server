@@ -769,6 +769,8 @@ public:
 	void	SendItemLink(const ItemInst* inst, bool sendtoall=false);
 	void	SendLootItemInPacket(const ItemInst* inst, int16 slot_id);
 	void	SendItemPacket(int16 slot_id, const ItemInst* inst, ItemPacketType packet_type);
+	inline bool IsValidSlotStruct(InventorySlot_Struct &is_struct) { return m_inv.IsValidClientSlotStruct(is_struct); }
+	inline bool IsValidServerSlotStruct(InventorySlot_Struct &is_struct) { return m_inv.IsValidServerSlotStruct(is_struct); }
 	bool	IsValidSlot(uint32 slot);
 	bool	IsBankSlot(uint32 slot);
 
