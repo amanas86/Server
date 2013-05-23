@@ -25,6 +25,7 @@
 #include "../common/packet_functions.h"
 #include "../common/packet_dump.h"
 #include "../common/MiscFunctions.h"
+#include "../common/StringUtil.h"
 #include "../common/features.h"
 #include "StringIDs.h"
 

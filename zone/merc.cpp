@@ -9,6 +9,7 @@
 #include "zone.h"
 #include "StringIDs.h"
 #include "../common/MiscFunctions.h"
+#include "../common/StringUtil.h"
 #include "../common/rulesys.h"
 #include "QuestParserCollection.h"
 #include "watermap.h"
