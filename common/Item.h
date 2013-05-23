@@ -36,16 +36,15 @@ class EvolveInfo;			// Stores information about an evolving item family
 #include <vector>
 #include <map>
 #include <list>
-using namespace std;
 #include "../common/eq_packet_structs.h"
 #include "../common/eq_constants.h"
 #include "../common/item_struct.h"
 #include "../common/clientversions.h"
 
 // Helper typedefs
-typedef list<ItemInst*>::const_iterator					iter_queue;
-typedef map<int16, ItemInst*>::const_iterator			iter_inst;
-typedef map<uint8, ItemInst*>::const_iterator			iter_contents;
+typedef std::list<ItemInst*>::const_iterator					iter_queue;
+typedef std::map<int16, ItemInst*>::const_iterator			iter_inst;
+typedef std::map<uint8, ItemInst*>::const_iterator			iter_contents;
 
 namespace ItemField {
 	enum {
@@ -140,7 +139,7 @@ public:
 	static bool		SetMobInventoryLimits(InventoryLimits &limits);
 	static bool		SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown);
 	
-	inline void		ResetInventoryLimits() { memcpy(this, 0, sizeof(InventoryLimits)); limits_set = false; }
+	inline void		ResetInventoryLimits() { memset(this, 0, sizeof(InventoryLimits)); limits_set = false; }
 	inline bool		IsLimitsSet() { return limits_set; }
 
 	inline int16	GetSlotTypeSize(int16 slot_type)	const { return (slot_type >= SLOTTYPE_START && slot_type < SlotType_Count) ? m_slottypesize[slot_type] : 0; }
@@ -203,7 +202,7 @@ protected:
 	// Protected Members
 	/////////////////////////
 
-	list<ItemInst*> m_list;
+	std::list<ItemInst*> m_list;
 
 };
 
@@ -306,53 +305,53 @@ protected:
 	///////////////////////////////
 
 	// Retrieves item within an inventory bucket
-	ItemInst* _GetItem(const map<int16, ItemInst*>& bucket, int16 slot_id) const;
+	ItemInst* _GetItem(const std::map<int16, ItemInst*>& bucket, int16 slot_id) const;
 
 	// Private "put" item into bucket, without regard for what is currently in bucket
 	int16 _PutItem(int16 slot_id, ItemInst* inst);
 
 	// Checks an inventory bucket for a particular item
-	int16 _HasItem(map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity);
+	int16 _HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity);
 	int16 _HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity);
-	int16 _HasItemByUse(map<int16, ItemInst*>& bucket, uint8 use, uint8 quantity);
+	int16 _HasItemByUse(std::map<int16, ItemInst*>& bucket, uint8 use, uint8 quantity);
 	int16 _HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity);
-	int16 _HasItemByLoreGroup(map<int16, ItemInst*>& bucket, uint32 loregroup);
+	int16 _HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 loregroup);
 	int16 _HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup);
 
 
 	// Player inventory
-	map<int16, ItemInst*>	m_worn;		// Items worn by character
-	map<int16, ItemInst*>	m_inv;		// Items in character personal inventory
-	//map<int16, ItemInst*>	m_bank;		// Items in character bank
-	map<int16, ItemInst*>	m_shbank;	// Items in character shared bank
-	//map<int16, ItemInst*>	m_trade;	// Items in a trade session
+	std::map<int16, ItemInst*>	m_worn;		// Items worn by character
+	std::map<int16, ItemInst*>	m_inv;		// Items in character personal inventory
+	//std::map<int16, ItemInst*>	m_bank;		// Items in character bank
+	std::map<int16, ItemInst*>	m_shbank;	// Items in character shared bank
+	//std::map<int16, ItemInst*>	m_trade;	// Items in a trade session
 	ItemInstQueue			m_cursor;	// Items on cursor: FIFO
 
-	map<int16, ItemInst*>	m_possessions;			// type 0 - combined equipment, personal and cursor
-	map<int16, ItemInst*>	m_bank;					// type 1
-	map<int16, ItemInst*>	m_sharedbank;			// type 2
-	map<int16, ItemInst*>	m_trade;				// type 3
-	map<int16, ItemInst*>	m_world;				// type 4
-	map<int16, ItemInst*>	m_limbo;				// type 5 - aka cursor buffer
-	map<int16, ItemInst*>	m_tribute;				// type 6
-	map<int16, ItemInst*>	m_trophytribute;		// type 7 - not yet implemented
-	map<int16, ItemInst*>	m_guildtribute;			// type 8 - not yet implemented, generated from guild entity?
-	map<int16, ItemInst*>	m_merchant;				// type 9 - generated from target?
-	map<int16, ItemInst*>	m_deleted;				// type 10 - unknown, possibly deleted item storage?
-	map<int16, ItemInst*>	m_corpse;				// type 11 - generated from target?
-	map<int16, ItemInst*>	m_bazaar;				// type 12 - generated from target?
-	map<int16, ItemInst*>	m_inspect;				// type 13 - generated from target?
-	map<int16, ItemInst*>	m_realestate;			// type 14 - not yet implemented
-	map<int16, ItemInst*>	m_viewmodpc;			// type 15 - unknown, possibly gm-related?
-	map<int16, ItemInst*>	m_viewmodbank;			// type 16 - unknown, possibly gm-related?
-	map<int16, ItemInst*>	m_viewmodsharedbank;	// type 17 - unknown, possibly gm-related?
-	map<int16, ItemInst*>	m_viewmodlimbo;			// type 18 - unknown, possibly gm-related?
-	map<int16, ItemInst*>	m_altstorage;			// type 19 - unknown
-	map<int16, ItemInst*>	m_archived;				// type 20 - unknown, possibly deleted item or tokenized bag storage?
-	map<int16, ItemInst*>	m_mail;					// type 21 - not yet implemented
-	map<int16, ItemInst*>	m_guildtrophytribute;	// type 22 - not yet implemented, generated from guild entity?
-	map<int16, ItemInst*>	m_krono;				// type 23
-	map<int16, ItemInst*>	m_other;				// type 24 - unknown
+	std::map<int16, ItemInst*>	m_possessions;			// type 0 - combined equipment, personal and cursor
+	std::map<int16, ItemInst*>	m_bank;					// type 1
+	std::map<int16, ItemInst*>	m_sharedbank;			// type 2
+	std::map<int16, ItemInst*>	m_trade;				// type 3
+	std::map<int16, ItemInst*>	m_world;				// type 4
+	std::map<int16, ItemInst*>	m_limbo;				// type 5 - aka cursor buffer
+	std::map<int16, ItemInst*>	m_tribute;				// type 6
+	std::map<int16, ItemInst*>	m_trophytribute;		// type 7 - not yet implemented
+	std::map<int16, ItemInst*>	m_guildtribute;			// type 8 - not yet implemented, generated from guild entity?
+	std::map<int16, ItemInst*>	m_merchant;				// type 9 - generated from target?
+	std::map<int16, ItemInst*>	m_deleted;				// type 10 - unknown, possibly deleted item storage?
+	std::map<int16, ItemInst*>	m_corpse;				// type 11 - generated from target?
+	std::map<int16, ItemInst*>	m_bazaar;				// type 12 - generated from target?
+	std::map<int16, ItemInst*>	m_inspect;				// type 13 - generated from target?
+	std::map<int16, ItemInst*>	m_realestate;			// type 14 - not yet implemented
+	std::map<int16, ItemInst*>	m_viewmodpc;			// type 15 - unknown, possibly gm-related?
+	std::map<int16, ItemInst*>	m_viewmodbank;			// type 16 - unknown, possibly gm-related?
+	std::map<int16, ItemInst*>	m_viewmodsharedbank;	// type 17 - unknown, possibly gm-related?
+	std::map<int16, ItemInst*>	m_viewmodlimbo;			// type 18 - unknown, possibly gm-related?
+	std::map<int16, ItemInst*>	m_altstorage;			// type 19 - unknown
+	std::map<int16, ItemInst*>	m_archived;				// type 20 - unknown, possibly deleted item or tokenized bag storage?
+	std::map<int16, ItemInst*>	m_mail;					// type 21 - not yet implemented
+	std::map<int16, ItemInst*>	m_guildtrophytribute;	// type 22 - not yet implemented, generated from guild entity?
+	std::map<int16, ItemInst*>	m_krono;				// type 23
+	std::map<int16, ItemInst*>	m_other;				// type 24 - unknown
 
 	InventoryLimits			m_limits;				// client-based inventory limits
 };
@@ -425,7 +424,7 @@ public:
 	uint8 FirstOpenSlot() const;
 	uint8 GetTotalItemCount() const;
 	bool IsNoneEmptyContainer();
-	map<uint8, ItemInst*>* GetContents() { return &m_contents; }
+	std::map<uint8, ItemInst*>* GetContents() { return &m_contents; }
 
 	//
 	// Augments
@@ -496,7 +495,7 @@ public:
 	virtual bool IsScaling() const		{ return false; }
 	virtual bool IsEvolving() const		{ return false; }
 
-	string Serialize(int16 slot_id) const { InternalSerializedItem_Struct s; s.slot_id=slot_id; s.inst=(const void *)this; string ser; ser.assign((char *)&s,sizeof(InternalSerializedItem_Struct)); return ser; }
+	std::string Serialize(int16 slot_id) const { InternalSerializedItem_Struct s; s.slot_id=slot_id; s.inst=(const void *)this; std::string ser; ser.assign((char *)&s,sizeof(InternalSerializedItem_Struct)); return ser; }
 	inline int32 GetSerialNumber() const { return m_SerialNumber; }
 	inline void SetSerialNumber(int32 id) { m_SerialNumber = id; }
 
@@ -524,8 +523,8 @@ protected:
 	int32				m_SerialNumber;	// Unique identifier for this instance of an item. Needed for Bazaar.
 	//
 	// Items inside of this item (augs or contents);
-	map<uint8, ItemInst*> m_contents; // Zero-based index: min=0, max=9
-	map<std::string, std::string> m_custom_data;
+	std::map<uint8, ItemInst*> m_contents; // Zero-based index: min=0, max=9
+	std::map<std::string, std::string> m_custom_data;
 };
 
 class EvoItemInst: public ItemInst {

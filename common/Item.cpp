@@ -36,7 +36,6 @@
 #include "races.h"
 #include "shareddb.h"
 #include "classes.h"
-using namespace std;
 
 int32 NextItemInstSerialNumber = 1;
 
@@ -107,7 +106,7 @@ ItemInstQueue::~ItemInstQueue() {
 }
 
 Inventory::~Inventory() {
-	map<int16, ItemInst*>::iterator cur,end;
+	std::map<int16, ItemInst*>::iterator cur,end;
 
 
 	cur = m_worn.begin();
@@ -592,7 +591,7 @@ ItemInst* Inventory::GetItem(int16 slot_id) const
 
 std::string ItemInst::GetCustomDataString() const {
 	std::string ret_val;
-	map<std::string, std::string>::const_iterator iter = m_custom_data.begin();
+	std::map<std::string, std::string>::const_iterator iter = m_custom_data.begin();
 	while(iter != m_custom_data.end()) {
 		if(ret_val.length() > 0) {
 			ret_val += "^";
@@ -636,14 +635,14 @@ void ItemInst::SetCustomData(std::string identifier, bool value) {
 }
 
 void ItemInst::DeleteCustomData(std::string identifier) {
-	map<std::string, std::string>::iterator iter = m_custom_data.find(identifier);
+	std::map<std::string, std::string>::iterator iter = m_custom_data.find(identifier);
 	if(iter != m_custom_data.end()) {
 		m_custom_data.erase(iter);
 	}
 }
 
 std::string ItemInst::GetCustomData(std::string identifier) {
-	map<std::string, std::string>::const_iterator iter = m_custom_data.find(identifier);
+	std::map<std::string, std::string>::const_iterator iter = m_custom_data.find(identifier);
 	if(iter != m_custom_data.end()) {
 		return iter->second;
 	}
@@ -1172,7 +1171,7 @@ void Inventory::dumpInventory() {
 }
 
 // Internal Method: Retrieves item within an inventory bucket
-ItemInst* Inventory::_GetItem(const map<int16, ItemInst*>& bucket, int16 slot_id) const
+ItemInst* Inventory::_GetItem(const std::map<int16, ItemInst*>& bucket, int16 slot_id) const
 {
 	iter_inst it = bucket.find(slot_id);
 	if (it != bucket.end()) {
@@ -1240,7 +1239,7 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 }
 
 // Internal Method: Checks an inventory bucket for a particular item
-int16 Inventory::_HasItem(map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity)
+int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, uint8 quantity)
 {
 	iter_inst it;
 	iter_contents itb;
@@ -1330,7 +1329,7 @@ int16 Inventory::_HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity)
 }
 
 // Internal Method: Checks an inventory bucket for a particular item
-int16 Inventory::_HasItemByUse(map<int16, ItemInst*>& bucket, uint8 use, uint8 quantity)
+int16 Inventory::_HasItemByUse(std::map<int16, ItemInst*>& bucket, uint8 use, uint8 quantity)
 {
 	iter_inst it;
 	iter_contents itb;
@@ -1398,7 +1397,7 @@ int16 Inventory::_HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity)
 	return SLOT_INVALID;
 }
 
-int16 Inventory::_HasItemByLoreGroup(map<int16, ItemInst*>& bucket, uint32 loregroup)
+int16 Inventory::_HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 loregroup)
 {
 	iter_inst it;
 	iter_contents itb;
