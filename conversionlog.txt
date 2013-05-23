@@ -2,6 +2,9 @@ EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
 --------------------------------------------------------------
 Status: NOT COMPILIBLE
 --------------------------------------------------------------
+== 05/23/2013 ==
+Uleat: Updated branch 'inventory_conversion' branch to Revision 815c3dc (commit 297)
+
 == 05/22/2013 ==
 Uleat: Cleaned up InventoryLimits and added a few additional accessors
 Uleat: Added InvalidateSlotStruct(). Used to set inital/reset struct invalidation
