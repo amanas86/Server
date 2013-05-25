@@ -2,8 +2,15 @@ EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
 --------------------------------------------------------------
 Status: NOT COMPILABLE
 --------------------------------------------------------------
+== 05/25/2013 ==
+Uleat: Added conversion sql for remapping player 'inventory' (augments not written correctly)
+
 == 05/24/2013 ==
 Uleat: Updated 'inventory_conversion' branch to 'master' Revision 52b8c0e (commit 322)
+Uleat: Added conversion sql for swapping 'ammo' and 'power source' bits in 'items' table
+
+NOTE: We should probably coordinate implementation of this conversion with a new peq release. We should also consider condensing
+      all scripts to one file, though any failures will be problematic -U
 
 == 05/23/2013 ==
 Uleat: Updated 'inventory_conversion' branch to 'master' Revision 815c3dc (commit 297)
