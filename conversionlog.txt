@@ -2,8 +2,11 @@ EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
 --------------------------------------------------------------
 Status: NOT COMPILABLE
 --------------------------------------------------------------
+== 05/26/2013 ==
+Uleat: Added conversion sql for remapping player 'sharedbank'
+
 == 05/25/2013 ==
-Uleat: Added conversion sql for remapping player 'inventory' (augments not written correctly)
+Uleat: Added conversion sql for remapping player 'inventory'
 
 == 05/24/2013 ==
 Uleat: Updated 'inventory_conversion' branch to 'master' Revision 52b8c0e (commit 322)

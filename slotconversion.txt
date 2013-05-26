@@ -3,13 +3,14 @@ EQEmu Inventory Slot Conversion
 [Quick Guide for New Slot Structure]
 {slottype, mainslot, subslot, augslot}
 
-{A, B, -1, -1}  - Parent Item
-{A, B, C, -1}   - Child Item
-{A, B, -1, D}   - Parent Augment Item
-{A, B, C, D}    - Child Augment Item
-{-1, -1 -1, -1} - Item Delete
+{A, B, -1, -1}   - Parent Item
+{A, B, C, -1}    - Child Item
+{A, B, -1, D}    - Parent Augment Item
+{A, B, C, D}     - Child Augment Item
+{-1, -1, -1, -1} - Item Delete
 
 (Not all slots may be listed, nor are all listed slots valid client values)
+
 
 [Main Slot Enumeration]
 Designation    Old Slot ID    New Slot Array

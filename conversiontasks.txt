@@ -10,9 +10,9 @@ EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
 		int16 augslot
 		int16 unknown01
 	};
-	
+[C/W]
 	The acutal model is {slottype, mainslot, subslot, augslot}. The extra fields are in place to avoid unnecessary conversions.
-	
+
 	(Need to test if unix timestamps are still sent using OP_MoveItem.)
 
 -- Incorporate a 'managed cursor' to replace the current ItemInstQueue method. Ensure that we use the client response of
@@ -21,6 +21,7 @@ EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
 
 -- Develop an 'InventoryLimits' system to allow direct access to client-based slot limitations..reducing, or eliminating the
    need to use 'ClientVersion' checks in the inventory code.
+[C/W]
 
 -- Convert all related inventory functions, where appropriate, to struct-based arguments from int16-based.
 
@@ -35,9 +36,11 @@ EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
 
 -- Convert inventory tables in database to new model (players, bots, corpses, etc...) 'Ammo' and 'Power Source' need to moved to
    their proper slots (22 & 21 versus the current 21 & 9999.) [See slotconversion.txt for more information.]
+[C/W]
 
 -- Bitfields for slots 21 & 22 need to be reversed in the main item database. This will allow direct comparison to the
    ItemInst::IsSlotAllowed bit-mask instead of compensating in code.
+[C/W]
 
 -- Move augmentations from item instance field entry to individual inventory entries in the table. [See slotconversion.txt for more
    information.]
@@ -51,3 +54,34 @@ EQEmu Inventory Conversion Tasks (Started on May 16, 2013 03:12)
    that we currently perform. (Debateable...)
 
 -- Anything else that needs to be added, deleted, or modified...
+
+
+List of tables that will probably need to have sql files for modification:
+ botinventory
+ botpetinventory
+ character_pet_inventory
+ guild_bank
+ inventory [c/w]
+ items [c/w]
+ object_contents
+ pets_equipmentset_entries
+ player_corpses
+ player_corpses_backup
+ qs_merchant_transaction_record_entries
+ qs_player_delete_record_entries
+ qs_player_handin_record_entries
+ qs_player_move_record
+ qs_player_move_record_entries
+ qs_player_trade_record_entries
+ sharedbank [c/w]
+ starting_items
+ trader
+ <others>
+ 
+(Some tables may not need to be updated if we can get away with using `mainslotid` data for updating and retrieval)
+
+(Consider using three main files for sql scripts - Convert.sql, Validate.sql and Cleanup.sql)
+
+
+
+
