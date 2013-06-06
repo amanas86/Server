@@ -2,6 +2,9 @@ EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
 --------------------------------------------------------------
 Status: NOT COMPILABLE
 --------------------------------------------------------------
+== 06/06/2013 ==
+Uleat: Updated 'inventory_conversion' branch to 'master' Revision 29c0c48 (commit 340)
+
 == 05/27/2013 ==
 Uleat: Updated 'inventory_conversion' branch to 'master' Revision 3942678 (commit 324)
 
