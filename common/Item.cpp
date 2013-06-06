@@ -145,7 +145,7 @@ Inventory::~Inventory() {
 
 InventoryLimits::~InventoryLimits()
 {
-	memcpy(this, 0, sizeof(InventoryLimits));
+	memset(this, 0, sizeof(InventoryLimits));
 }
 
 // Make a copy of an ItemInst object
