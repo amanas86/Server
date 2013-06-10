@@ -52,35 +52,7 @@ static inline int32 GetNextItemInstSerialNumber() {
 	return NextItemInstSerialNumber;
 }
 
-ItemInst::ItemInst(const Item_Struct* item, int16 charges) {
-	m_use_type = ItemUseNormal;
-	m_item = item;
-	m_charges = charges;
-	m_price = 0;
-	m_instnodrop = false;
-	m_merchantslot = 0;
-	if(m_item &&m_item->ItemClass == ItemClassCommon)
-		m_color = m_item->Color;
-	else
-		m_color = 0;
-	m_merchantcount = 1;
-	m_SerialNumber = GetNextItemInstSerialNumber();
-}
 
-ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges) {
-	m_use_type = ItemUseNormal;
-	m_item = db->GetItem(item_id);
-	m_charges = charges;
-	m_price = 0;
-	m_merchantslot = 0;
-	m_instnodrop=false;
-	if(m_item && m_item->ItemClass == ItemClassCommon)
-		m_color = m_item->Color;
-	else
-		m_color = 0;
-	m_merchantcount = 1;
-	m_SerialNumber = GetNextItemInstSerialNumber();
-}
 
 ManagedCursor::~ManagedCursor()
 {
@@ -148,334 +120,8 @@ InventoryLimits::~InventoryLimits()
 	memset(this, 0, sizeof(InventoryLimits));
 }
 
-// Make a copy of an ItemInst object
-ItemInst::ItemInst(const ItemInst& copy)
-{
-	m_use_type=copy.m_use_type;
-	m_item=copy.m_item;
-	m_charges=copy.m_charges;
-	m_price=copy.m_price;
-	m_color=copy.m_color;
-	m_merchantslot=copy.m_merchantslot;
-	m_currentslot=copy.m_currentslot;
-	m_instnodrop=copy.m_instnodrop;
-	m_merchantcount=copy.m_merchantcount;
-	// Copy container contents
-	iter_contents it;
-	for (it=copy.m_contents.begin(); it!=copy.m_contents.end(); it++) {
-		ItemInst* inst_old = it->second;
-		ItemInst* inst_new = nullptr;
-
-		if (inst_old) {
-			inst_new = inst_old->Clone();
-		}
-
-		if (inst_new != nullptr) {
-			m_contents[it->first] = inst_new;
-		}
-	}
-	std::map<std::string, std::string>::const_iterator iter;
-	for (iter = copy.m_custom_data.begin(); iter != copy.m_custom_data.end(); iter++) {
-		m_custom_data[iter->first] = iter->second;
-	}
-	m_SerialNumber = copy.m_SerialNumber;
-	m_custom_data = copy.m_custom_data;
-}
-
-// Clean up container contents
-ItemInst::~ItemInst()
-{
-	Clear();
-}
-
-// Clone a type of ItemInst object
-// c++ doesn't allow a polymorphic copy constructor,
-// so we have to resort to a polymorphic Clone()
-ItemInst* ItemInst::Clone() const
-{
-	// Pseudo-polymorphic copy constructor
-	return new ItemInst(*this);
-}
-
-// Query item type
-bool ItemInst::IsType(ItemClass item_class) const
-{
-	// Check usage type
-	if ((m_use_type == ItemUseWorldContainer) && (item_class == ItemClassContainer))
-
-		return true;
-	if (!m_item)
-		return false;
-
-	return (m_item->ItemClass == item_class);
-}
-
-// Is item stackable?
-bool ItemInst::IsStackable() const
-{
-	return m_item->Stackable;
-}
-
-// Can item be equipped?
-
-bool ItemInst::IsEquipable(uint16 race, uint16 class_) const
-{
-	if (!m_item || (m_item->Slots == 0))
-		return false;
-
-	return m_item->IsEquipable(race, class_);
-}
-
-// Can equip at this slot?
-bool ItemInst::IsEquipable(int16 slot_id) const
-{
-	if (!m_item)
-		return false;
-
-	if(slot_id == 9999) {
-		slot_id = 22;
-		uint32 slot_mask = (1 << slot_id);
-		if (slot_mask & m_item->Slots)
-			return true;
-	}
-
-	if (slot_id < 22) {
-		uint32 slot_mask = (1 << slot_id);
-		if (slot_mask & m_item->Slots)
-			return true;
-	}
-
-	return false;
-}
-
-int8 ItemInst::AvailableAugmentSlot(int32 augtype) const
-{
-	if (m_item->ItemClass != ItemClassCommon || !m_item)
-		return -1;
-
-	int i;
-	for (i=0;i<5;i++) {
-		if (!GetItem(i)) {
-			if (augtype==-1 || (m_item->AugSlotType[i] && ((1<<(m_item->AugSlotType[i]-1)) & augtype)))
-				break;
-		}
-
-	}
-
-	return (i<5) ? i : -1;
-}
-
-bool ItemInst::AvailableWearSlot(uint32 aug_wear_slots) const
-{
-	if (m_item->ItemClass != ItemClassCommon || !m_item)
-		return false;
-
-	int i;
-	for(i=0; i<23; i++) {
-		if(m_item->Slots & (1<<i)) {
-			if(aug_wear_slots & (1<<i))
-				break;
-		}
-	}
-
-	return (i<23) ? true : false;
-}
-
-uint32 ItemInst::GetAugmentItemID(uint8 slot) const
-{
-uint32 id=0;
-	if (m_item->ItemClass == ItemClassCommon) {
-		return GetItemID(slot);
-	}
-
-	return id;
-}
-
-uint32 ItemInst::GetItemID(uint8 slot) const
-{
-const ItemInst *item;
-uint32 id=0;
-	if ((item=GetItem(slot))!=nullptr)
-		id= item->GetItem()->ID;
-
-	return id;
-}
 
 
-// Has attack/delay?
-bool ItemInst::IsWeapon() const
-{
-	if (!m_item || m_item->ItemClass != ItemClassCommon)
-		return false;
-	if(m_item->ItemType==ItemTypeArrow && m_item->Damage != 0)
-		return true;
-	else
-		return ((m_item->Damage != 0) && (m_item->Delay != 0));
-}
-
-bool ItemInst::IsAmmo() const {
-
-	if(!m_item) return false;
-
-	if((m_item->ItemType == ItemTypeArrow) ||
-		(m_item->ItemType == ItemTypeThrowing) ||
-		(m_item->ItemType == ItemTypeThrowingv2))
-		return true;
-
-	return false;
-
-}
-
-// Retrieve augment inside item
-ItemInst* ItemInst::GetAugment(uint8 slot) const
-{
-	if (m_item->ItemClass == ItemClassCommon)
-		return GetItem(slot);
-
-	return nullptr;
-}
-
-// Remove augment from item and destroy it
-void ItemInst::DeleteAugment(uint8 index)
-{
-	if (m_item->ItemClass == ItemClassCommon)
-		DeleteItem(index);
-}
-
-// Remove augment from item and return it
-ItemInst* ItemInst::RemoveAugment(uint8 index)
-{
-	if (m_item->ItemClass == ItemClassCommon)
-		return PopItem(index);
-
-	return nullptr;
-}
-
-// Add an augment to the item
-void ItemInst::PutAugment(uint8 slot, const ItemInst& augment)
-{
-	if (m_item->ItemClass == ItemClassCommon)
-		PutItem(slot,augment);
-}
-
-void ItemInst::PutAugment(SharedDatabase *db, uint8 slot, uint32 item_id)
-{
-	if (item_id != 0) {
-		const ItemInst* aug = db->CreateItem(item_id);
-		if(aug)
-		{
-			PutAugment(slot,*aug);
-			safe_delete(aug);
-		}
-	}
-}
-
-// Retrieve item inside container
-ItemInst* ItemInst::GetItem(uint8 index) const
-{
-	iter_contents it = m_contents.find(index);
-	if (it != m_contents.end()) {
-		ItemInst* inst = it->second;
-		return inst;
-	}
-
-	return nullptr;
-}
-
-void ItemInst::PutItem(uint8 index, const ItemInst& inst)
-{
-	// Clean up item already in slot (if exists)
-	DeleteItem(index);
-
-
-	// Delegate to internal method
-	_PutItem(index, inst.Clone());
-}
-
-// Remove item inside container
-void ItemInst::DeleteItem(uint8 index)
-{
-	ItemInst* inst = PopItem(index);
-	safe_delete(inst);
-}
-
-// Remove all items from container
-void ItemInst::Clear()
-{
-	// Destroy container contents
-	iter_contents cur, end;
-	cur = m_contents.begin();
-	end = m_contents.end();
-	for (; cur != end; cur++) {
-		ItemInst* inst = cur->second;
-		safe_delete(inst);
-	}
-	m_contents.clear();
-}
-
-// Remove all items from container
-void ItemInst::ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent)
-{
-	// Destroy container contents
-	iter_contents cur, end, del;
-	cur = m_contents.begin();
-	end = m_contents.end();
-	for (; cur != end;) {
-		ItemInst* inst = cur->second;
-		const Item_Struct* item = inst->GetItem();
-		del = cur;
-		cur++;
-
-		switch(is_nodrop) {
-		case byFlagSet:
-			if (item->NoDrop == 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
-			}
-		case byFlagNotSet:
-			if (item->NoDrop != 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
-			}
-		default:
-			break;
-		}
-
-		switch(is_norent) {
-		case byFlagSet:
-			if (item->NoRent == 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
-			}
-		case byFlagNotSet:
-			if (item->NoRent != 0) {
-				safe_delete(inst);
-				m_contents.erase(del->first);
-				continue;
-			}
-		default:
-			break;
-		}
-	}
-}
-
-// Remove item from container without memory delete
-// Hands over memory ownership to client of this function call
-ItemInst* ItemInst::PopItem(uint8 index)
-{
-	iter_contents it = m_contents.find(index);
-	if (it != m_contents.end()) {
-		ItemInst* inst = it->second;
-		m_contents.erase(index);
-		return inst;
-	}
-
-	// Return pointer that needs to be deleted (or otherwise managed)
-	return nullptr;
-}
 
 // <type> ManagedCursor::<function>() - Start
 
@@ -582,66 +228,6 @@ ItemInst* Inventory::GetItem(int16 slot_id) const
 	return result;
 }
 
-std::string ItemInst::GetCustomDataString() const {
-	std::string ret_val;
-	std::map<std::string, std::string>::const_iterator iter = m_custom_data.begin();
-	while(iter != m_custom_data.end()) {
-		if(ret_val.length() > 0) {
-			ret_val += "^";
-		}
-		ret_val += iter->first;
-		ret_val += "^";
-		ret_val += iter->second;
-		iter++;
-
-		if(ret_val.length() > 0) {
-			ret_val += "^";
-		}
-	}
-	return ret_val;
-}
-
-void ItemInst::SetCustomData(std::string identifier, std::string value) {
-	DeleteCustomData(identifier);
-	m_custom_data[identifier] = value;
-}
-
-void ItemInst::SetCustomData(std::string identifier, int value) {
-	DeleteCustomData(identifier);
-	std::stringstream ss;
-	ss << value;
-	m_custom_data[identifier] = ss.str();
-}
-
-void ItemInst::SetCustomData(std::string identifier, float value) {
-	DeleteCustomData(identifier);
-	std::stringstream ss;
-	ss << value;
-	m_custom_data[identifier] = ss.str();
-}
-
-void ItemInst::SetCustomData(std::string identifier, bool value) {
-	DeleteCustomData(identifier);
-	std::stringstream ss;
-	ss << value;
-	m_custom_data[identifier] = ss.str();
-}
-
-void ItemInst::DeleteCustomData(std::string identifier) {
-	std::map<std::string, std::string>::iterator iter = m_custom_data.find(identifier);
-	if(iter != m_custom_data.end()) {
-		m_custom_data.erase(iter);
-	}
-}
-
-std::string ItemInst::GetCustomData(std::string identifier) {
-	std::map<std::string, std::string>::const_iterator iter = m_custom_data.find(identifier);
-	if(iter != m_custom_data.end()) {
-		return iter->second;
-	}
-
-	return "";
-}
 
 // Retrieve item at specified position within bag
 ItemInst* Inventory::GetItem(int16 slot_id, uint8 bagidx) const
@@ -1584,58 +1170,6 @@ bool InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClient
 	return true;
 }
 
-bool ItemInst::IsSlotAllowed(int16 slot_id) const {
-	// 'SupportsContainers' and 'slot_id > 21' previously saw the reassigned PowerSource slot (9999 to 22) as valid -U
-	if(!m_item) { return false; }
-	else if(Inventory::SupportsContainers(slot_id)) { return true; }
-	else if(m_item->Slots & (1 << slot_id)) { return true; }
-	else if(slot_id == 9999 && (m_item->Slots & (1 << 22))) { return true; }
-	else if(slot_id != 9999 && slot_id > 21) { return true; }
-	else { return false; }
-}
-
-uint8 ItemInst::FirstOpenSlot() const
-{
-	uint8 slots=m_item->BagSlots,i;
-	for(i=0;i<slots;i++) {
-		if (!GetItem(i))
-			break;
-	}
-
-	return (i<slots) ? i : 0xff;
-}
-
-uint8 ItemInst::GetTotalItemCount() const
-{
-	uint8 item_count = 1;
-
-	if(m_item->ItemClass != ItemClassContainer) { return item_count; }
-
-	for(int idx = 0; idx < m_item->BagSlots; idx++) { if(GetItem(idx)) { item_count++; } }
-
-	return item_count;
-}
-
-bool ItemInst::IsNoneEmptyContainer()
-{
-	if(m_item->ItemClass != ItemClassContainer)
-		return false;
-
-	for(int i = 0; i < m_item->BagSlots; ++i)
-		if(GetItem(i))
-			return true;
-
-	return false;
-}
-
-bool ItemInst::IsAugmented()
-{
-	for(int i = 0; i < MAX_AUGMENT_SLOTS; ++i)
-		if (GetAugmentItemID(i))
-			return true;
-
-	return false;
-}
 
 void Inventory::InvalidateSlotStruct(InventorySlot_Struct &is_struct)
 {
@@ -1838,278 +1372,857 @@ bool Inventory::CanItemFitInContainer(const Item_Struct *ItemToTry, const Item_S
 	return true;
 }
 
+
+/*
+ Class: ItemInst ######################################################################
+	Base class for an instance of an item. An item instance encapsulates item data
+	and data specific to an item instance (includes dye, augments, charges, etc)
+ ######################################################################################
+*/
+
+// Class constructors
+ItemInst::ItemInst(const Item_Struct* item, int16 charges)
+{
+	m_use_type		= ItemUseNormal;
+	m_item			= item;
+	m_charges		= charges;
+	m_price			= 0;
+	m_instnodrop	= false;
+	m_merchantslot	= 0;
+
+	if(m_item && m_item->ItemClass == ItemClassCommon) { m_color = m_item->Color; }
+	else { m_color = 0; }
+
+	m_merchantcount	= 1;
+	m_serialnumber	= GetNextItemInstSerialNumber();
+}
+
+ItemInst::ItemInst(SharedDatabase *db, uint32 item_id, int16 charges)
+{
+	m_use_type		= ItemUseNormal;
+	m_item			= db->GetItem(item_id);
+	m_charges		= charges;
+	m_price			= 0;
+	m_merchantslot	= 0;
+	m_instnodrop	= false;
+
+	if(m_item && m_item->ItemClass == ItemClassCommon) { m_color = m_item->Color; }
+	else { m_color = 0; }
+
+	m_merchantcount	= 1;
+	m_serialnumber	= GetNextItemInstSerialNumber();
+}
+
+ItemInst::ItemInst(const ItemInst& copy)
+{
+	m_use_type		= copy.m_use_type;
+	m_item			= copy.m_item;
+	m_charges		= copy.m_charges;
+	m_price			= copy.m_price;
+	m_color			= copy.m_color;
+	m_merchantslot	= copy.m_merchantslot;
+	m_currentslot	= copy.m_currentslot;
+	m_instnodrop	= copy.m_instnodrop;
+	m_merchantcount	= copy.m_merchantcount;
+
+	iter_contents cc_iter;
+	for(cc_iter = copy.m_contents.begin(); cc_iter != copy.m_contents.end(); cc_iter++) {
+		ItemInst* inst_old = cc_iter->second;
+		ItemInst* inst_new = nullptr;
+
+		if(inst_old) { inst_new = inst_old->Clone(); }
+
+		if(inst_new != nullptr) { m_contents[cc_iter->first] = inst_new; }
+	}
+
+	std::map<std::string, std::string>::const_iterator ccd_iter;
+	for(ccd_iter = copy.m_customdata.begin(); ccd_iter != copy.m_customdata.end(); ccd_iter++)
+	{
+		m_customdata[ccd_iter->first] = ccd_iter->second;
+	}
+
+	m_serialnumber	= copy.m_serialnumber;
+	m_customdata	= copy.m_customdata;
+}
+
+// Class deconstructors
+ItemInst::~ItemInst()
+{
+	Clear();
+}
+
+// ItemInst methods
+ItemInst* ItemInst::Clone() const
+{
+	// Clone a type of ItemInst object: c++ doesn't allow a polymorphic
+	// copy constructor, so we have to resort to a polymorphic Clone()
+	
+	// Pseudo-polymorphic copy constructor
+	return new ItemInst(*this);
+}
+
+bool ItemInst::IsType(ItemClass item_class) const
+{
+	if((m_use_type == ItemUseWorldContainer) && (item_class == ItemClassContainer)) { return true; }
+
+	if(m_item) { return (m_item->ItemClass == item_class); }
+
+	return false;
+}
+
+bool ItemInst::IsStackable() const
+{
+	if(m_item) { return m_item->Stackable; }
+
+	return false;
+}
+
+bool ItemInst::IsEquipable(uint16 race_id, uint16 class_id) const
+{
+	if(!m_item || (m_item->Slots == 0)) { return false; }
+
+	return m_item->IsEquipable(race_id, class_id);
+}
+
+bool ItemInst::IsEquipable(InventorySlot_Struct is_struct) const
+{
+	if(!m_item) { return false; }
+
+	if(is_struct.slottype == SlotType_Possessions)
+	{
+		if(is_struct.subslot == SUBSLOT_INVALID && is_struct.augslot == AUGSLOT_INVALID)
+		{
+			if(is_struct.mainslot >= EQUIPMENT_START && is_struct.mainslot <= EQUIPMENT_END)
+			{
+				if(m_item->Slots & (1 << is_struct.mainslot)) { return true; }
+			}
+		}
+	}
+
+	return false;
+}
+
+bool ItemInst::IsWeapon() const
+{
+	if(!m_item || m_item->ItemClass != ItemClassCommon) { return false; }
+
+	if(m_item->ItemType == ItemTypeArrow && m_item->Damage != 0) { return true; }
+	else { return ((m_item->Damage != 0) && (m_item->Delay != 0)); }
+}
+
+bool ItemInst::IsAmmo() const
+{
+	if(!m_item) { return false; }
+
+	if((m_item->ItemType == ItemTypeArrow) ||
+		(m_item->ItemType == ItemTypeThrowing) ||
+		(m_item->ItemType == ItemTypeThrowingv2))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool ItemInst::IsAugmentable() const
+{
+	if(!m_item) { return false; }
+	
+	for(uint8 aug_index = AUGSLOT_START; aug_index < MAX_AUGMENTS; aug_index++)
+	{
+		if(m_item->AugSlotType[aug_index]) { return true; }
+	}
+
+	return false;
+}
+
+bool ItemInst::IsSlotAllowed(InventorySlot_Struct is_struct) const
+{
+	if(!m_item) { return false; }
+	else if(Inventory::SupportsContainers(0 /* placeholder for 'is_struct' */)) { return true; }
+	else if(IsEquipable(is_struct)) { return true; }
+	else if(is_struct.augslot == AUGSLOT_INVALID)
+	{
+		if(is_struct.slottype == SlotType_Possessions)
+		{
+			if(is_struct.mainslot >= PERSONAL_START && is_struct.mainslot <= Slot_Cursor)
+			{
+				// The use of 'm_item->BagSlots' will prevent bag overloading - the use of illegal bag slots
+				// ..otherwise, use '< MAX_BAGSLOTS'
+
+				if(is_struct.subslot >= SUBSLOT_INVALID && is_struct.subslot < m_item->BagSlots) { return true; }
+			}
+		}
+		else if(is_struct.slottype > SlotType_Possessions && is_struct.slottype < SlotType_Count)
+		{
+			// This is more cpu intensive, but will suffice until we can work out what
+			// slot types are actually needed so they can possibly be hard-coded
+
+			InventoryLimits il_inst; // should probably delete this..safe_delete() didn't like it...
+			il_inst.SetServerInventoryLimits(il_inst);
+			
+			if(is_struct.mainslot >= MAINSLOT_START && is_struct.mainslot < il_inst[is_struct.slottype])
+			{
+				if(is_struct.subslot >= SUBSLOT_INVALID && is_struct.subslot < m_item->BagSlots) { return true; }
+			}
+		}
+	}
+
+	return false;
+}
+
+bool ItemInst::IsNoneEmptyContainer()
+{
+	if(!m_item || m_item->ItemClass != ItemClassContainer) { return false; }
+
+	for(int16 sub_slot = SUBSLOT_START; sub_slot < m_item->BagSlots; sub_slot++)
+	{
+		if(GetItem(sub_slot)) { return true; }
+	}
+
+	return false;
+}
+
+bool ItemInst::AvailableWearSlot(uint32 aug_wear_slots) const
+{
+	if(!m_item || m_item->ItemClass != ItemClassCommon) { return false; }
+
+	uint32 wear_index;
+	for(wear_index = EQUIPMENT_START; wear_index <= EQUIPMENT_END; wear_index++)
+	{
+		if(m_item->Slots & (1 << wear_index))
+		{
+			if(aug_wear_slots & (1 << wear_index)) { break; }
+		}
+	}
+
+	return ((wear_index <= EQUIPMENT_END) ? true : false);
+}
+
+bool ItemInst::IsAugmented()
+{
+	// This may need to be added..might be an existing problem for bags with augments stored in them
+	// if(!m_item || m_item->ItemClass != ItemClassCommon) { return false; }
+	
+	for(int16 aug_slot = AUGSLOT_START; aug_slot < MAX_AUGMENTS; aug_slot++)
+	{
+		if(GetAugmentItemID(aug_slot)) { return true; }
+	}
+
+	return false;
+}
+
+uint8 ItemInst::GetTotalItemCount() const
+{
+	uint8 item_count = 1;
+
+	// This will still be a problem with nullptr, but the iteminst data will still log in qs
+	// (queryserv method will probably be updated to use this function for both bag and augment items)
+	if(!m_item || m_item->ItemClass != ItemClassContainer) { return item_count; }
+
+	for(int16 sub_slot = SUBSLOT_START; sub_slot < m_item->BagSlots; sub_slot++)
+	{
+		if(GetItem(sub_slot)) { item_count++; }
+	}
+
+	return item_count;
+}
+
+void ItemInst::Clear()
+{
+	iter_contents cur, end;
+	cur = m_contents.begin();
+	end = m_contents.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst* inst = cur->second;
+		safe_delete(inst);
+	}
+
+	m_contents.clear();
+}
+
+void ItemInst::ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent)
+{
+	iter_contents cur, end, del;
+	cur = m_contents.begin();
+	end = m_contents.end();
+	for(; cur != end;)
+	{
+		ItemInst* inst = cur->second;
+		const Item_Struct* item = inst->GetItem();
+		del = cur;
+		cur++;
+
+		if(!item) { continue; }
+
+		switch(is_nodrop)
+		{
+			case byFlagSet:
+			{
+				if (item->NoDrop == 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			}
+			case byFlagNotSet:
+			{
+				if (item->NoDrop != 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			}
+			default: { break; }
+		}
+
+		switch(is_norent)
+		{
+			case byFlagSet:
+			{
+				if (item->NoRent == 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			}
+			case byFlagNotSet:
+			{
+				if (item->NoRent != 0)
+				{
+					safe_delete(inst);
+					m_contents.erase(del->first);
+					continue;
+				}
+			}
+			default: { break; }
+		}
+	}
+}
+
+std::string ItemInst::GetCustomDataString() const
+{
+	std::string ret_val;
+	std::map<std::string, std::string>::const_iterator cd_iter = m_customdata.begin();
+	while(cd_iter != m_customdata.end())
+	{
+		if(ret_val.length() > 0) { ret_val += "^"; }
+
+		ret_val += cd_iter->first;
+		ret_val += "^";
+		ret_val += cd_iter->second;
+		cd_iter++;
+
+		if(ret_val.length() > 0) { ret_val += "^"; }
+	}
+
+	return ret_val;
+}
+
+std::string ItemInst::GetCustomData(std::string identifier)
+{
+	std::map<std::string, std::string>::const_iterator cd_iter = m_customdata.find(identifier);
+
+	if(cd_iter != m_customdata.end()) { return cd_iter->second; }
+
+	return "";
+}
+
+void ItemInst::SetCustomData(std::string identifier, std::string value)
+{
+	DeleteCustomData(identifier);
+	m_customdata[identifier] = value;
+}
+
+void ItemInst::SetCustomData(std::string identifier, int value)
+{
+	DeleteCustomData(identifier);
+	std::stringstream ss;
+	ss << value;
+	m_customdata[identifier] = ss.str();
+}
+
+void ItemInst::SetCustomData(std::string identifier, float value)
+{
+	DeleteCustomData(identifier);
+	std::stringstream ss;
+	ss << value;
+	m_customdata[identifier] = ss.str();
+}
+
+void ItemInst::SetCustomData(std::string identifier, bool value)
+{
+	DeleteCustomData(identifier);
+	std::stringstream ss;
+	ss << value;
+	m_customdata[identifier] = ss.str();
+}
+
+void ItemInst::DeleteCustomData(std::string identifier)
+{
+	std::map<std::string, std::string>::iterator cd_iter = m_customdata.find(identifier);
+
+	if(cd_iter != m_customdata.end()) { m_customdata.erase(cd_iter); }
+}
+
+// Container (bag) methods
+int16 ItemInst::FirstOpenSlot() const
+{
+	int16 sub_slot;
+	for(sub_slot = SUBSLOT_START; sub_slot < m_item->BagSlots; sub_slot++)
+	{
+		if(!GetItem(sub_slot)) { break; }
+	}
+
+	return ((sub_slot < m_item->BagSlots) ? sub_slot : SUBSLOT_INVALID);
+}
+
+uint32 ItemInst::GetItemID(int16 sub_slot) const
+{
+	const ItemInst *item;
+	uint32 item_id = 0;
+
+	if((item = GetItem(sub_slot)) != nullptr) { item_id = item->GetItem()->ID; }
+
+	return item_id;
+}
+
+ItemInst* ItemInst::GetItem(int16 sub_slot) const
+{
+	if(sub_slot & MCONTENTS_OOR) { return nullptr; }
+	
+	iter_contents it = m_contents.find((uint8)sub_slot);
+
+	if(it != m_contents.end())
+	{
+		ItemInst* inst = it->second;
+		return inst;
+	}
+
+	return nullptr;
+}
+
+void ItemInst::PutItem(int16 sub_slot, const ItemInst& inst)
+{
+	if(sub_slot & MCONTENTS_OOR) { return; }
+
+	DeleteItem(sub_slot);
+
+	_PutItem(sub_slot, inst.Clone());
+}
+
+void ItemInst::PutItem(SharedDatabase *db, int16 sub_slot, uint32 item_id)
+{
+	if(sub_slot & MCONTENTS_OOR) { return; }
+	
+	// Declared, but undefined..for some reason...
+	// Will probably need to define for m_contents usage in new inventory system
+}
+
+ItemInst* ItemInst::PopItem(int16 sub_slot)
+{
+	if(sub_slot & MCONTENTS_OOR) { return nullptr; }
+	
+	iter_contents c_iter = m_contents.find((uint8)sub_slot);
+
+	if(c_iter != m_contents.end())
+	{
+		ItemInst* inst = c_iter->second;
+		m_contents.erase((uint8)sub_slot);
+		return inst;
+	}
+
+	return nullptr;
+}
+
+void ItemInst::DeleteItem(int16 sub_slot)
+{
+	if(sub_slot & MCONTENTS_OOR) { return; }
+	
+	ItemInst* inst = PopItem((uint8)sub_slot);
+	safe_delete(inst);
+}
+
+// Augment methods
+int16 ItemInst::AvailableAugmentSlot(int32 aug_type) const
+{
+	if(!m_item || m_item->ItemClass != ItemClassCommon) { return AUGSLOT_INVALID; }
+
+	int16 aug_slot;
+	for(aug_slot = AUGSLOT_START; aug_slot < MAX_AUGMENTS; aug_slot++)
+	{
+		if(!GetItem(aug_slot))
+		{
+			if(aug_type == -1 ||
+				(m_item->AugSlotType[(uint8)aug_slot] && ((1 << (m_item->AugSlotType[(uint8)aug_slot] - 1)) & aug_type)))
+			{
+				break;
+			}
+		}
+	}
+
+	return ((aug_slot < MAX_AUGMENTS) ? aug_slot : AUGSLOT_INVALID);
+}
+
+uint32 ItemInst::GetAugmentItemID(int16 aug_slot) const
+{
+	uint32 item_id = 0;
+	
+	if(aug_slot & MCONTENTS_OOR) { return item_id; }
+	
+	if(m_item && m_item->ItemClass == ItemClassCommon) { return GetItemID(aug_slot); }
+
+	return item_id;
+}
+
+ItemInst* ItemInst::GetAugment(int16 aug_slot) const
+{
+	if(aug_slot & MCONTENTS_OOR) { return nullptr; }
+	
+	if(m_item && m_item->ItemClass == ItemClassCommon) { return GetItem(aug_slot); }
+
+	return nullptr;
+}
+
+void ItemInst::PutAugment(int16 aug_slot, const ItemInst& augment)
+{
+	if(aug_slot & MCONTENTS_OOR) { return; }
+	
+	if(m_item && m_item->ItemClass == ItemClassCommon) { PutItem(aug_slot, augment); }
+}
+
+void ItemInst::PutAugment(SharedDatabase *db, int16 aug_slot, uint32 item_id)
+{
+	if(aug_slot & MCONTENTS_OOR) { return; }
+	
+	if(item_id != 0)
+	{
+		const ItemInst* aug = db->CreateItem(item_id);
+
+		if(aug)
+		{
+			PutAugment(aug_slot, *aug);
+			safe_delete(aug);
+		}
+	}
+}
+
+ItemInst* ItemInst::RemoveAugment(int16 aug_slot)
+{
+	if(aug_slot & MCONTENTS_OOR) { return nullptr; }
+	
+	if(m_item && m_item->ItemClass == ItemClassCommon) { return PopItem(aug_slot); }
+
+	return nullptr;
+}
+
+void ItemInst::DeleteAugment(int16 aug_slot)
+{
+	if(aug_slot & MCONTENTS_OOR) { return; }
+
+	if(m_item && m_item->ItemClass == ItemClassCommon) { DeleteItem(aug_slot); }
+}
+
+// Internal container methods
+void ItemInst::_PutItem(int16 contents_index, ItemInst* inst)
+ {
+	if(contents_index & MCONTENTS_OOR) { return; }
+	
+	m_contents[(uint8)contents_index] = inst;
+ }
+// ######################################################################################
+
+
 // Methods for EvoItemInst, the extended ItemInst for evolving/scaling items
 // Copy constructors
-EvoItemInst::EvoItemInst(const EvoItemInst &copy) {
-	m_use_type=copy.m_use_type;
-	m_item=copy.m_item;
-	m_charges=copy.m_charges;
-	m_price=copy.m_price;
-	m_color=copy.m_color;
-	m_merchantslot=copy.m_merchantslot;
-	m_currentslot=copy.m_currentslot;
-	m_instnodrop=copy.m_instnodrop;
-	m_merchantcount=copy.m_merchantcount;
+EvoItemInst::EvoItemInst(const EvoItemInst &copy)
+{
+	m_use_type		= copy.m_use_type;
+	m_item			= copy.m_item;
+	m_charges		= copy.m_charges;
+	m_price			= copy.m_price;
+	m_color			= copy.m_color;
+	m_merchantslot	= copy.m_merchantslot;
+	m_currentslot	= copy.m_currentslot;
+	m_instnodrop	= copy.m_instnodrop;
+	m_merchantcount	= copy.m_merchantcount;
+
 	// Copy container contents
 	iter_contents it;
-	for (it=copy.m_contents.begin(); it!=copy.m_contents.end(); it++) {
+	for(it = copy.m_contents.begin(); it != copy.m_contents.end(); it++)
+	{
 		ItemInst* inst_old = it->second;
 		ItemInst* inst_new = nullptr;
 
-		if (inst_old) {
-			inst_new = inst_old->Clone();
-		}
+		if(inst_old) { inst_new = inst_old->Clone(); }
 
-		if (inst_new != nullptr) {
-			m_contents[it->first] = inst_new;
-		}
+		if(inst_new != nullptr) { m_contents[it->first] = inst_new; }
 	}
+
 	std::map<std::string, std::string>::const_iterator iter;
-	for (iter = copy.m_custom_data.begin(); iter != copy.m_custom_data.end(); iter++) {
-		m_custom_data[iter->first] = iter->second;
+	for(iter = copy.m_customdata.begin(); iter != copy.m_customdata.end(); iter++)
+	{
+		m_customdata[iter->first] = iter->second;
 	}
-	m_SerialNumber = copy.m_SerialNumber;
-	m_exp = copy.m_exp;
-	m_evolveLvl = copy.m_evolveLvl;
-	m_activated = copy.m_activated;
-	m_evolveInfo = nullptr;
-	if (copy.m_scaledItem)
-		m_scaledItem = new Item_Struct(*copy.m_scaledItem);
-	else
-		m_scaledItem = nullptr;
+
+	m_serialnumber	= copy.m_serialnumber;
+	m_exp			= copy.m_exp;
+	m_evolveLvl		= copy.m_evolveLvl;
+	m_activated		= copy.m_activated;
+	m_evolveInfo	= nullptr;
+
+	if(copy.m_scaledItem) { m_scaledItem = new Item_Struct(*copy.m_scaledItem); }
+	else { m_scaledItem = nullptr; }
 }
 
-EvoItemInst::EvoItemInst(const ItemInst &basecopy) {
+EvoItemInst::EvoItemInst(const ItemInst &basecopy)
+{
 	EvoItemInst* copy = (EvoItemInst*)&basecopy;
 
-	m_use_type=copy->m_use_type;
-	m_item=copy->m_item;
-	m_charges=copy->m_charges;
-	m_price=copy->m_price;
-	m_color=copy->m_color;
-	m_merchantslot=copy->m_merchantslot;
-	m_currentslot=copy->m_currentslot;
-	m_instnodrop=copy->m_instnodrop;
-	m_merchantcount=copy->m_merchantcount;
+	m_use_type		= copy->m_use_type;
+	m_item			= copy->m_item;
+	m_charges		= copy->m_charges;
+	m_price			= copy->m_price;
+	m_color			= copy->m_color;
+	m_merchantslot	= copy->m_merchantslot;
+	m_currentslot	= copy->m_currentslot;
+	m_instnodrop	= copy->m_instnodrop;
+	m_merchantcount	= copy->m_merchantcount;
+
 	// Copy container contents
 	iter_contents it;
-	for (it=copy->m_contents.begin(); it!=copy->m_contents.end(); it++) {
+	for(it = copy->m_contents.begin(); it != copy->m_contents.end(); it++)
+	{
 		ItemInst* inst_old = it->second;
 		ItemInst* inst_new = nullptr;
 
-		if (inst_old) {
-			inst_new = inst_old->Clone();
-		}
+		if(inst_old) { inst_new = inst_old->Clone(); }
 
-		if (inst_new != nullptr) {
-			m_contents[it->first] = inst_new;
-		}
+		if(inst_new != nullptr) { m_contents[it->first] = inst_new; }
 	}
 
 	std::map<std::string, std::string>::const_iterator iter;
-	for (iter = copy->m_custom_data.begin(); iter != copy->m_custom_data.end(); iter++) {
-		m_custom_data[iter->first] = iter->second;
+	for(iter = copy->m_customdata.begin(); iter != copy->m_customdata.end(); iter++)
+	{
+		m_customdata[iter->first] = iter->second;
 	}
-	m_SerialNumber = copy->m_SerialNumber;
-	m_exp = 0;
-	m_evolveLvl = 0;
-	m_activated = false;
-	m_evolveInfo = nullptr;
-	m_scaledItem = nullptr;
+
+	m_serialnumber	= copy->m_serialnumber;
+	m_exp			= 0;
+	m_evolveLvl		= 0;
+	m_activated		= false;
+	m_evolveInfo	= nullptr;
+	m_scaledItem	= nullptr;
 }
 
-EvoItemInst::EvoItemInst(const Item_Struct* item, int16 charges) {
-	m_use_type = ItemUseNormal;
-	m_item = item;
-	m_charges = charges;
-	m_price = 0;
-	m_instnodrop = false;
-	m_merchantslot = 0;
-	if(m_item &&m_item->ItemClass == ItemClassCommon)
-		m_color = m_item->Color;
-	else
-		m_color = 0;
-	m_merchantcount = 1;
-	m_SerialNumber = GetNextItemInstSerialNumber();
-	m_exp = 0;
-	m_evolveLvl = 0;
-	m_activated = false;
-	m_evolveInfo = nullptr;
-	m_scaledItem = nullptr;
+EvoItemInst::EvoItemInst(const Item_Struct* item, int16 charges)
+{
+	m_use_type		= ItemUseNormal;
+	m_item			= item;
+	m_charges		= charges;
+	m_price			= 0;
+	m_instnodrop	= false;
+	m_merchantslot	= 0;
+
+	if(m_item && m_item->ItemClass == ItemClassCommon) { m_color = m_item->Color; }
+	else { m_color = 0; }
+
+	m_merchantcount	= 1;
+	m_serialnumber	= GetNextItemInstSerialNumber();
+	m_exp			= 0;
+	m_evolveLvl		= 0;
+	m_activated		= false;
+	m_evolveInfo	= nullptr;
+	m_scaledItem	= nullptr;
 }
 
-EvoItemInst::~EvoItemInst() {
+EvoItemInst::~EvoItemInst()
+{
 	safe_delete(m_scaledItem);
 }
 
-EvoItemInst* EvoItemInst::Clone() const {
+EvoItemInst* EvoItemInst::Clone() const
+{
 	return new EvoItemInst(*this);
 }
 
-const Item_Struct* EvoItemInst::GetItem() const {
-	if(!m_scaledItem)
-		return m_item;
-	else
-		return m_scaledItem;
+const Item_Struct* EvoItemInst::GetItem() const
+{
+	if(!m_scaledItem) { return m_item; }
+	else { return m_scaledItem; }
 }
 
-const Item_Struct* EvoItemInst::GetUnscaledItem() const {
+const Item_Struct* EvoItemInst::GetUnscaledItem() const
+{
 	return m_item;
 }
 
-void EvoItemInst::Initialize(SharedDatabase *db) {
+void EvoItemInst::Initialize(SharedDatabase *db)
+{
 	// if there's no actual item, don't do anything
-	if(!m_item) return;
+	if(!m_item) { return; }
 
 	// initialize scaling items
-	if (m_item->CharmFileID != 0) {
+	if(m_item->CharmFileID != 0)
+	{
 		m_evolveLvl = -1;
 		this->ScaleItem();
 	}
-
 	// initialize evolving items
-	else if ((db) && m_item->LoreGroup >= 1000 && m_item->LoreGroup != -1) {
+	else if((db) && m_item->LoreGroup >= 1000 && m_item->LoreGroup != -1)
+	{
 		// not complete yet
 	}
 }
 
-void EvoItemInst::ScaleItem() {
+void EvoItemInst::ScaleItem()
+{
 	// free memory from any previously scaled item data
 	safe_delete(m_scaledItem);
 
-	m_scaledItem = new Item_Struct(*m_item);
-	float Mult = (float)(GetExp())/10000;	// scaling is determined by exp, with 10,000 being full stats
+	m_scaledItem		= new Item_Struct(*m_item);
+	float Mult			= (float)(GetExp()) / 10000;	// scaling is determined by exp, with 10,000 being full stats
 
-	m_scaledItem->AStr = (int8)((float)m_item->AStr*Mult);
-	m_scaledItem->ASta = (int8)((float)m_item->ASta*Mult);
-	m_scaledItem->AAgi = (int8)((float)m_item->AAgi*Mult);
-	m_scaledItem->ADex = (int8)((float)m_item->ADex*Mult);
-	m_scaledItem->AInt = (int8)((float)m_item->AInt*Mult);
-	m_scaledItem->AWis = (int8)((float)m_item->AWis*Mult);
-	m_scaledItem->ACha = (int8)((float)m_item->ACha*Mult);
+	m_scaledItem->AStr	= (int8)((float)m_item->AStr * Mult);
+	m_scaledItem->ASta	= (int8)((float)m_item->ASta * Mult);
+	m_scaledItem->AAgi	= (int8)((float)m_item->AAgi * Mult);
+	m_scaledItem->ADex	= (int8)((float)m_item->ADex * Mult);
+	m_scaledItem->AInt	= (int8)((float)m_item->AInt * Mult);
+	m_scaledItem->AWis	= (int8)((float)m_item->AWis * Mult);
+	m_scaledItem->ACha	= (int8)((float)m_item->ACha * Mult);
 
-	m_scaledItem->MR = (int8)((float)m_item->MR*Mult);
-	m_scaledItem->PR = (int8)((float)m_item->PR*Mult);
-	m_scaledItem->DR = (int8)((float)m_item->DR*Mult);
-	m_scaledItem->CR = (int8)((float)m_item->CR*Mult);
-	m_scaledItem->FR = (int8)((float)m_item->FR*Mult);
+	m_scaledItem->MR	= (int8)((float)m_item->MR * Mult);
+	m_scaledItem->PR	= (int8)((float)m_item->PR * Mult);
+	m_scaledItem->DR	= (int8)((float)m_item->DR * Mult);
+	m_scaledItem->CR	= (int8)((float)m_item->CR * Mult);
+	m_scaledItem->FR	= (int8)((float)m_item->FR * Mult);
 
-	m_scaledItem->HP = (int32)((float)m_item->HP*Mult);
-	m_scaledItem->Mana = (int32)((float)m_item->Mana*Mult);
-	m_scaledItem->AC = (int32)((float)m_item->AC*Mult);
+	m_scaledItem->HP	= (int32)((float)m_item->HP * Mult);
+	m_scaledItem->Mana	= (int32)((float)m_item->Mana * Mult);
+	m_scaledItem->AC	= (int32)((float)m_item->AC * Mult);
 
-	m_scaledItem->SkillModValue = (int32)((float)m_item->SkillModValue*Mult);
-	m_scaledItem->BaneDmgAmt = (int8)((float)m_item->BaneDmgAmt*Mult);
-	m_scaledItem->BardValue = (int32)((float)m_item->BardValue*Mult);
-	m_scaledItem->ElemDmgAmt = (uint8)((float)m_item->ElemDmgAmt*Mult);
-	m_scaledItem->Damage = (uint32)((float)m_item->Damage*Mult);
+	m_scaledItem->SkillModValue	= (int32)((float)m_item->SkillModValue * Mult);
+	m_scaledItem->BaneDmgAmt	= (int8)((float)m_item->BaneDmgAmt * Mult);
+	m_scaledItem->BardValue		= (int32)((float)m_item->BardValue * Mult);
+	m_scaledItem->ElemDmgAmt	= (uint8)((float)m_item->ElemDmgAmt * Mult);
+	m_scaledItem->Damage		= (uint32)((float)m_item->Damage * Mult);
 
-	m_scaledItem->CombatEffects = (int8)((float)m_item->CombatEffects*Mult);
-	m_scaledItem->Shielding = (int8)((float)m_item->Shielding*Mult);
-	m_scaledItem->StunResist = (int8)((float)m_item->StunResist*Mult);
-	m_scaledItem->StrikeThrough = (int8)((float)m_item->StrikeThrough*Mult);
-	m_scaledItem->ExtraDmgAmt = (uint32)((float)m_item->ExtraDmgAmt*Mult);
-	m_scaledItem->SpellShield = (int8)((float)m_item->SpellShield*Mult);
-	m_scaledItem->Avoidance = (int8)((float)m_item->Avoidance*Mult);
-	m_scaledItem->Accuracy = (int8)((float)m_item->Accuracy*Mult);
+	m_scaledItem->CombatEffects	= (int8)((float)m_item->CombatEffects * Mult);
+	m_scaledItem->Shielding		= (int8)((float)m_item->Shielding * Mult);
+	m_scaledItem->StunResist	= (int8)((float)m_item->StunResist * Mult);
+	m_scaledItem->StrikeThrough	= (int8)((float)m_item->StrikeThrough * Mult);
+	m_scaledItem->ExtraDmgAmt	= (uint32)((float)m_item->ExtraDmgAmt * Mult);
+	m_scaledItem->SpellShield	= (int8)((float)m_item->SpellShield * Mult);
+	m_scaledItem->Avoidance		= (int8)((float)m_item->Avoidance * Mult);
+	m_scaledItem->Accuracy		= (int8)((float)m_item->Accuracy * Mult);
 
-	m_scaledItem->FactionAmt1 = (int32)((float)m_item->FactionAmt1*Mult);
-	m_scaledItem->FactionAmt2 = (int32)((float)m_item->FactionAmt2*Mult);
-	m_scaledItem->FactionAmt3 = (int32)((float)m_item->FactionAmt3*Mult);
-	m_scaledItem->FactionAmt4 = (int32)((float)m_item->FactionAmt4*Mult);
+	m_scaledItem->FactionAmt1	= (int32)((float)m_item->FactionAmt1 * Mult);
+	m_scaledItem->FactionAmt2	= (int32)((float)m_item->FactionAmt2 * Mult);
+	m_scaledItem->FactionAmt3	= (int32)((float)m_item->FactionAmt3 * Mult);
+	m_scaledItem->FactionAmt4	= (int32)((float)m_item->FactionAmt4 * Mult);
 
-	m_scaledItem->Endur = (uint32)((float)m_item->Endur*Mult);
-	m_scaledItem->DotShielding = (uint32)((float)m_item->DotShielding*Mult);
-	m_scaledItem->Attack = (uint32)((float)m_item->Attack*Mult);
-	m_scaledItem->Regen = (uint32)((float)m_item->Regen*Mult);
-	m_scaledItem->ManaRegen = (uint32)((float)m_item->ManaRegen*Mult);
-	m_scaledItem->EnduranceRegen = (uint32)((float)m_item->EnduranceRegen*Mult);
-	m_scaledItem->Haste = (uint32)((float)m_item->Haste*Mult);
-	m_scaledItem->DamageShield = (uint32)((float)m_item->DamageShield*Mult);
-
+	m_scaledItem->Endur				= (uint32)((float)m_item->Endur * Mult);
+	m_scaledItem->DotShielding		= (uint32)((float)m_item->DotShielding * Mult);
+	m_scaledItem->Attack			= (uint32)((float)m_item->Attack * Mult);
+	m_scaledItem->Regen				= (uint32)((float)m_item->Regen * Mult);
+	m_scaledItem->ManaRegen			= (uint32)((float)m_item->ManaRegen * Mult);
+	m_scaledItem->EnduranceRegen	= (uint32)((float)m_item->EnduranceRegen * Mult);
+	m_scaledItem->Haste				= (uint32)((float)m_item->Haste * Mult);
+	m_scaledItem->DamageShield		= (uint32)((float)m_item->DamageShield * Mult);
 
 	m_scaledItem->CharmFileID = 0;	// this stops the client from trying to scale the item itself.
 }
 
-bool EvoItemInst::EvolveOnAllKills() const {
+bool EvoItemInst::EvolveOnAllKills() const
+{
 	return (m_evolveInfo && m_evolveInfo->AllKills);
 }
 
-int8 EvoItemInst::GetMaxEvolveLvl() const {
-	if(m_evolveInfo)
-		return m_evolveInfo->MaxLvl;
-	else
-		return 0;
+int8 EvoItemInst::GetMaxEvolveLvl() const
+{
+	if(m_evolveInfo) { return m_evolveInfo->MaxLvl; }
+	else { return 0; }
 }
 
-uint32 EvoItemInst::GetKillsNeeded(uint8 currentlevel) {
+uint32 EvoItemInst::GetKillsNeeded(uint8 currentlevel)
+{
 	uint32 kills = -1;	// default to -1 (max uint32 value) because this value is usually divided by, so we don't want to ever return zero.
-	if (m_evolveInfo)
-		if (currentlevel != m_evolveInfo->MaxLvl)
-			kills = m_evolveInfo->LvlKills[currentlevel-1];
+	
+	if(m_evolveInfo)
+	{
+		if(currentlevel != m_evolveInfo->MaxLvl) { kills = m_evolveInfo->LvlKills[currentlevel - 1]; }
+	}
 
-	if (kills == 0)
-		kills = -1;
+	if(kills == 0) { kills = -1; }
 
 	return kills;
 }
 
-EvolveInfo::EvolveInfo() {
+EvolveInfo::EvolveInfo()
+{
 	// nothing here yet
 }
 
-EvolveInfo::EvolveInfo(uint32 first, uint8 max, bool allkills, uint32 L2, uint32 L3, uint32 L4, uint32 L5, uint32 L6, uint32 L7, uint32 L8, uint32 L9, uint32 L10) {
-	FirstItem = first;
-	MaxLvl = max;
-	AllKills = allkills;
-	LvlKills[0] = L2;
-	LvlKills[1] = L3;
-	LvlKills[2] = L4;
-	LvlKills[3] = L5;
-	LvlKills[4] = L6;
-	LvlKills[5] = L7;
-	LvlKills[6] = L8;
-	LvlKills[7] = L9;
-	LvlKills[8] = L10;
+EvolveInfo::EvolveInfo(uint32 first, uint8 max, bool allkills, uint32 L2, uint32 L3, uint32 L4, uint32 L5, uint32 L6, uint32 L7, uint32 L8, uint32 L9, uint32 L10)
+{
+	FirstItem	= first;
+	MaxLvl		= max;
+	AllKills	= allkills;
+	LvlKills[0]	= L2;
+	LvlKills[1]	= L3;
+	LvlKills[2]	= L4;
+	LvlKills[3]	= L5;
+	LvlKills[4]	= L6;
+	LvlKills[5]	= L7;
+	LvlKills[6]	= L8;
+	LvlKills[7]	= L9;
+	LvlKills[8]	= L10;
 }
 
-bool Item_Struct::IsEquipable(uint16 Race, uint16 Class_) const
+
+bool Item_Struct::IsEquipable(uint16 race_id, uint16 class_id) const
 {
 	bool IsRace = false;
 	bool IsClass = false;
 
 	uint32 Classes_ = Classes;
-
 	uint32 Races_ = Races;
 
-	uint32 Race_ = GetArrayRace(Race);
+	uint32 Race_ = GetArrayRace(race_id);
 
-	for (int CurrentClass = 1; CurrentClass <= PLAYER_CLASS_COUNT; ++CurrentClass)
+	for(int CurrentClass = 1; CurrentClass <= PLAYER_CLASS_COUNT; ++CurrentClass)
 	{
-		if (Classes_ % 2 == 1)
+		if(Classes_ % 2 == 1)
 		{
-			if (CurrentClass == Class_)
+			if(CurrentClass == class_id)
 			{
 					IsClass = true;
-				break;
+					break;
 			}
 		}
+
 		Classes_ >>= 1;
 	}
 
 	Race_ = (Race_ == 18 ? 16 : Race_);
 
-	for (unsigned int CurrentRace = 1; CurrentRace <= PLAYER_RACE_COUNT; ++CurrentRace)
+	for(unsigned int CurrentRace = 1; CurrentRace <= PLAYER_RACE_COUNT; ++CurrentRace)
 	{
-		if (Races_ % 2 == 1)
+		if(Races_ % 2 == 1)
 		{
-				if (CurrentRace == Race_)
+			if(CurrentRace == Race_)
 			{
-					IsRace = true;
+				IsRace = true;
 				break;
 			}
 		}
+
 		Races_ >>= 1;
 	}
+
 	return (IsRace && IsClass);
 }

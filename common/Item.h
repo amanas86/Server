@@ -133,7 +133,7 @@ private:
 class InventoryLimits
 {
 public:
-	virtual ~InventoryLimits();
+	~InventoryLimits();
 
 	static bool		SetServerInventoryLimits(InventoryLimits &limits);
 	static bool		SetMobInventoryLimits(InventoryLimits &limits);
@@ -365,175 +365,187 @@ protected:
 
 class SharedDatabase;
 
-// ########################################
-// Class: ItemInst
-//	Base class for an instance of an item
-//	An item instance encapsulates item data + data specific
-//	to an item instance (includes dye, augments, charges, etc)
+/*
+ Class: ItemInst ######################################################################
+	Base class for an instance of an item. An item instance encapsulates item data
+	and data specific to an item instance (includes dye, augments, charges, etc)
+ ######################################################################################
+*/
 class ItemInst
 {
 public:
-	/////////////////////////
-	// Methods
-	/////////////////////////
-
-	// Constructors/Destructor
+	// Class constructors
 	ItemInst(const Item_Struct* item = nullptr, int16 charges = 0);
-
 	ItemInst(SharedDatabase *db, uint32 item_id, int16 charges = 0);
-
-	ItemInst(ItemUseType use_type) {
-		m_use_type = use_type;
-		m_item = nullptr;
-		m_charges = 0;
-		m_price = 0;
-		m_instnodrop = false;
-		m_merchantslot = 0;
-		m_color = 0;
+	ItemInst(ItemUseType use_type)
+	{
+		m_use_type		= use_type;
+		m_item			= nullptr;
+		m_charges		= 0;
+		m_price			= 0;
+		m_instnodrop	= false;
+		m_merchantslot	= 0;
+		m_color			= 0;
 	}
-
 	ItemInst(const ItemInst& copy);
 
+
+	// Class deconstructors
 	virtual ~ItemInst();
 
-	// Query item type
+
+	// ItemInst property accessors
+	virtual const Item_Struct* GetItem() const { return m_item; }
+	void SetItem(const Item_Struct* item) { m_item = item; }
+
+	int16 GetCharges() const { return m_charges; }
+	void SetCharges(int16 charges) { m_charges = charges; }
+
+	uint32 GetColor() const { return m_color; }
+	void SetColor(uint32 color) { m_color = color; }
+
+	bool IsInstNoDrop() const { return m_instnodrop; }
+	void SetInstNoDrop(bool instnodrop_flag) { m_instnodrop = instnodrop_flag; }
+
+	uint32 GetMerchantSlot() const { return m_merchantslot; }
+	void SetMerchantSlot(uint32 merchant_slot) { m_merchantslot = merchant_slot; }
+
+	int32 GetMerchantCount() const { return m_merchantcount; }
+	void SetMerchantCount(int32 merchant_count) { m_merchantcount = merchant_count; }
+
+	uint32 GetPrice() const { return m_price; }
+	void SetPrice(uint32 price) { m_price = price; }
+
+	int16 GetCurrentSlot() const { return m_currentslot; }
+	void SetCurrentSlot(int16 current_slot) { m_currentslot = current_slot; }
+
+	inline int32 GetSerialNumber() const { return m_serialnumber; }
+	inline void SetSerialNumber(int32 serial_number) { m_serialnumber = serial_number; }
+
+
+	// Item_Struct property accessors
+	const uint32 GetID() const { return (m_item ? m_item->ID : 0); }
+	const uint32 GetItemScriptID() const { return (m_item ? m_item->ScriptFileID : 0); }
+	inline int32 GetAugmentType() const { return (m_item ? m_item->AugType : 0); }
+
+
+	// ItemInst methods
+	virtual ItemInst* Clone() const;
+
 	virtual bool IsType(ItemClass item_class) const;
-
-	// Can item be stacked?
 	virtual bool IsStackable() const;
-
-	// Can item be equipped by/at?
-	virtual bool IsEquipable(uint16 race, uint16 class_) const;
-	virtual bool IsEquipable(int16 slot_id) const;
-
-	//
-	// Augements
-	//
-	inline bool IsAugmentable() const { return m_item->AugSlotType[0]!=0 || m_item->AugSlotType[1]!=0 || m_item->AugSlotType[2]!=0 || m_item->AugSlotType[3]!=0 || m_item->AugSlotType[4]!=0; }
-	bool AvailableWearSlot(uint32 aug_wear_slots) const;
-	int8 AvailableAugmentSlot(int32 augtype) const;
-	inline int32 GetAugmentType() const { return m_item->AugType; }
-
-	inline bool IsExpendable() const { return ((m_item->Click.Type == ET_Expendable ) || (m_item->ItemType == ItemTypePotion)); }
-
-	//
-	// Contents
-	//
-	ItemInst* GetItem(uint8 slot) const;
-	virtual uint32 GetItemID(uint8 slot) const;
-	inline const ItemInst* operator[](uint8 slot) const { return GetItem(slot); }
-	void PutItem(uint8 slot, const ItemInst& inst);
-	void PutItem(SharedDatabase *db, uint8 slot, uint32 item_id);
-	void DeleteItem(uint8 slot);
-	ItemInst* PopItem(uint8 index);
-	void Clear();
-	void ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent);
-	uint8 FirstOpenSlot() const;
-	uint8 GetTotalItemCount() const;
-	bool IsNoneEmptyContainer();
-	std::map<uint8, ItemInst*>* GetContents() { return &m_contents; }
-
-	//
-	// Augments
-	//
-	ItemInst* GetAugment(uint8 slot) const;
-	virtual uint32 GetAugmentItemID(uint8 slot) const;
-	void PutAugment(uint8 slot, const ItemInst& inst);
-	void PutAugment(SharedDatabase *db, uint8 slot, uint32 item_id);
-	void DeleteAugment(uint8 slot);
-	ItemInst* RemoveAugment(uint8 index);
-	bool IsAugmented();
-
-	// Has attack/delay?
+	virtual bool IsEquipable(uint16 race_id, uint16 class_id) const;
+	virtual bool IsEquipable(InventorySlot_Struct is_struct) const;
 	virtual bool IsWeapon() const;
 	virtual bool IsAmmo() const;
 
-	// Accessors
-	const uint32 GetID() const { return m_item->ID; }
-	const uint32 GetItemScriptID() const { return m_item->ScriptFileID; }
-	virtual const Item_Struct* GetItem() const		{ return m_item; }
-	void SetItem(const Item_Struct* item)	{ m_item = item; }
+	bool IsAugmentable() const;
 
-	int16 GetCharges() const				{ return m_charges; }
-	void SetCharges(int16 charges)			{ m_charges = charges; }
+	inline bool IsExpendable() const
+	{
+		return (m_item ? ((m_item->Click.Type == ET_Expendable ) || (m_item->ItemType == ItemTypePotion)) : false);
+	}
 
-	uint32 GetPrice() const					{ return m_price; }
-	void SetPrice(uint32 price)				{ m_price = price; }
+	virtual bool IsEvolving() const { return false; }
+	virtual bool IsScaling() const { return false; }
 
-	void SetColor(uint32 color)				{ m_color = color; }
-	uint32 GetColor() const					{ return m_color; }
+	bool IsSlotAllowed(InventorySlot_Struct is_struct) const;
+	bool IsNoneEmptyContainer();
+	
+	bool AvailableWearSlot(uint32 aug_wear_slots) const;
+	bool IsAugmented();
 
-	uint32 GetMerchantSlot() const				{ return m_merchantslot; }
-	void SetMerchantSlot(uint32 slot)		{ m_merchantslot = slot; }
+	uint8 GetTotalItemCount() const;
 
-	int32 GetMerchantCount() const				{ return m_merchantcount; }
-	void SetMerchantCount(int32 count)		{ m_merchantcount = count; }
+	void Clear();
+	void ClearByFlags(byFlagSetting is_nodrop, byFlagSetting is_norent);
 
-	int16 GetCurrentSlot() const			{ return m_currentslot; }
-	void SetCurrentSlot(int16 curr_slot)	{ m_currentslot = curr_slot; }
-
-
-
-
-	// Is this item already attuned?
-	bool IsInstNoDrop() const { return m_instnodrop; }
-	void SetInstNoDrop(bool flag) { m_instnodrop=flag; }
+	std::map<uint8, ItemInst*>* GetContents() { return &m_contents; }
 
 	std::string GetCustomDataString() const;
+	std::string GetCustomData(std::string identifier);
 	void SetCustomData(std::string identifier, std::string value);
 	void SetCustomData(std::string identifier, int value);
 	void SetCustomData(std::string identifier, float value);
 	void SetCustomData(std::string identifier, bool value);
-	std::string GetCustomData(std::string identifier);
 	void DeleteCustomData(std::string identifier);
 
-	// Allows treatment of this object as though it were a pointer to m_item
+	std::string Serialize(InventorySlot_Struct is_struct) const
+	{
+		InternalSerializedItem_Struct isi_struct;
+		isi_struct.slot_id = 0 /* placeholder for 'is_struct' */;
+		isi_struct.inst = (const void *)this;
+		std::string ser;
+		ser.assign((char *)&isi_struct, sizeof(InternalSerializedItem_Struct));
+		return ser;
+	}
+
+
+	// Container (bag) methods
+	int16 FirstOpenSlot() const;
+
+	virtual uint32 GetItemID(int16 sub_slot) const;
+
+	ItemInst* GetItem(int16 sub_slot) const;
+	void PutItem(int16 sub_slot, const ItemInst& inst);
+	void PutItem(SharedDatabase *db, int16 sub_slot, uint32 item_id);
+
+	ItemInst* PopItem(int16 sub_slot);
+	void DeleteItem(int16 sub_slot);
+	
+
+	// Augment methods
+	int16 AvailableAugmentSlot(int32 aug_type) const;	
+
+	virtual uint32 GetAugmentItemID(int16 aug_slot) const;
+
+	ItemInst* GetAugment(int16 aug_slot) const;
+	void PutAugment(int16 aug_slot, const ItemInst& inst);
+	void PutAugment(SharedDatabase *db, int16 aug_slot, uint32 item_id);
+
+	ItemInst* RemoveAugment(int16 aug_slot);
+	void DeleteAugment(int16 aug_slot);
+
+
+	// ItemInst operators
 	operator bool() const { return (m_item != nullptr); }
+	bool operator==(const ItemInst& right) const { return (m_item ? (this->m_item == right.m_item) : false); }
+	bool operator!=(const ItemInst& right) const { return (m_item ? (this->m_item != right.m_item) : false); }
 
-	// Compare inner Item_Struct of two ItemInst objects
-	bool operator==(const ItemInst& right) const { return (this->m_item == right.m_item); }
-	bool operator!=(const ItemInst& right) const { return (this->m_item != right.m_item); }
+	inline const ItemInst* operator[](int16 sub_slot) const { return GetItem(sub_slot); } // Container op
 
-	// Clone current item
-	virtual ItemInst* Clone() const;
-
-	bool IsSlotAllowed(int16 slot_id) const;
-
-	virtual bool IsScaling() const		{ return false; }
-	virtual bool IsEvolving() const		{ return false; }
-
-	std::string Serialize(int16 slot_id) const { InternalSerializedItem_Struct s; s.slot_id=slot_id; s.inst=(const void *)this; std::string ser; ser.assign((char *)&s,sizeof(InternalSerializedItem_Struct)); return ser; }
-	inline int32 GetSerialNumber() const { return m_SerialNumber; }
-	inline void SetSerialNumber(int32 id) { m_SerialNumber = id; }
 
 protected:
-	//////////////////////////
-	// Protected Members
-	//////////////////////////
-	iter_contents _begin()		{ return m_contents.begin(); }
-	iter_contents _end()		{ return m_contents.end(); }
+	iter_contents _begin() { return m_contents.begin(); }
+	iter_contents _end() { return m_contents.end(); }
 
 	friend class Inventory;
 
+	void _PutItem(int16 contents_index, ItemInst* inst);
 
-	void _PutItem(uint8 index, ItemInst* inst) { m_contents[index] = inst; }
+	const Item_Struct* m_item;
+	ItemUseType m_use_type;
 
-	ItemUseType			m_use_type;	// Usage type for item
-	const Item_Struct*	m_item;		// Ptr to item data
-	int16				m_charges;	// # of charges for chargeable items
-	uint32				m_price;	// Bazaar /trader price
-	uint32				m_color;
-	uint32				m_merchantslot;
-	int16				m_currentslot;
-	bool				m_instnodrop;
-	int32				m_merchantcount;		//number avaliable on the merchant, -1=unlimited
-	int32				m_SerialNumber;	// Unique identifier for this instance of an item. Needed for Bazaar.
-	//
-	// Items inside of this item (augs or contents);
-	std::map<uint8, ItemInst*> m_contents; // Zero-based index: min=0, max=9
-	std::map<std::string, std::string> m_custom_data;
+	int16 m_charges;
+	uint32 m_color;
+	bool m_instnodrop;
+
+	uint32 m_merchantslot;
+	int32 m_merchantcount;
+	uint32 m_price;
+	int16 m_currentslot;
+	int32 m_serialnumber;
+
+	std::map<std::string, std::string> m_customdata;
+	std::map<uint8, ItemInst*> m_contents;
 };
 
+
+/*
+ Class: EvoItemInst ######################################################################
+	<description>
+ #########################################################################################
+*/
 class EvoItemInst: public ItemInst {
 public:
 	// constructor and destructor

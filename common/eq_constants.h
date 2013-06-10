@@ -771,6 +771,8 @@ enum InventoryPossessions
 #define BAG_INVALID					(uint8)0xFF // may not be usable - want '-1' used as invalid
 #define AUGMENT_INVALID				(uint8)0xFF
 
+#define MCONTENTS_OOR				(int16)0xFF00
+
 // U: Legacy enumeration..will be deleted
 enum InventorySlot
 {
