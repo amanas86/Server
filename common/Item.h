@@ -139,8 +139,8 @@ public:
 	static bool		SetMobInventoryLimits(InventoryLimits &limits);
 	static bool		SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version = EQClientUnknown);
 	
-	inline void		ResetInventoryLimits() { memset(this, 0, sizeof(InventoryLimits)); limits_set = false; }
-	inline bool		IsLimitsSet() { return limits_set; }
+	void			ResetInventoryLimits();
+	inline bool		IsLimitsSet() const { return m_limits_set; }
 
 	inline int16	GetSlotTypeSize(int16 slot_type)	const { return (slot_type >= SLOTTYPE_START && slot_type < SlotType_Count) ? m_slottypesize[slot_type] : 0; }
 	inline const int16	operator[](int16 slot_type)		const { return GetSlotTypeSize(slot_type); }
@@ -157,7 +157,7 @@ public:
 	inline uint8	GetBagSlotsMax()					const { return m_bagslotsmax; }
 	inline uint8	GetAugmentsMax()					const { return m_augmentsmax; }
 
-protected:
+private:
 	int16			m_slottypesize[SlotType_Count];
 
 	int16			m_equipmentstart;
@@ -172,8 +172,7 @@ protected:
 	uint8			m_bagslotsmax;
 	uint8			m_augmentsmax;
 
-private:
-	bool			limits_set;
+	bool			m_limits_set;
 };
 
 // Depricated class -U

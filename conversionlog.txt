@@ -2,6 +2,11 @@ EQEMu Inventory Conversion log (Started on May 16, 2013 03:12)
 --------------------------------------------------------------
 Status: NOT COMPILABLE
 --------------------------------------------------------------
+== 06/13/2013 ==
+Uleat: Updated 'inventory_conversion' branch to 'master' Revision 28eb80e (commit 342)
+Uleat: Made pre-conversion layout/format changes to 'Inventory' class methods (makes it easier to read)
+Uleat: Made some minor exisiting code changes
+
 == 06/10/2013 ==
 Uleat: Modified class 'ItemInst' to accept new inventory structure..may require more work ('Inventory' is next)
 Uleat: Added 'm_item' null checks to avoid server crashing in rare instances

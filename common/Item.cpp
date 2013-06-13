@@ -30,10 +30,23 @@
 #include <sstream>
 #include <iostream>
 
+const int16 ServerInventoryLimits[SlotType_Count] =
+{
+	SIZE_POSSESSIONS,	SIZE_BANK,					SIZE_SHAREDBANK,
+	SIZE_TRADE,			SIZE_WORLD,					SIZE_LIMBO,
+	SIZE_TRIBUTE,		SIZE_TROPHYTRIBUTE,			SIZE_GUILDTRIBUTE,
+	SIZE_MERCHANT,		SIZE_DELETED,				SIZE_CORPSE,
+	SIZE_BAZAAR,		SIZE_INSPECT,				SIZE_REALESTATE,
+	SIZE_VIEWMODPC,		SIZE_VIEWMODBANK,			SIZE_VIEWMODSHAREDBANK,
+	SIZE_VIEWMODLIMBO,	SIZE_ALTSTORAGE,			SIZE_ARCHIVED,
+	SIZE_MAIL,			SIZE_GUILDTROPHYTRIBUTE,	SIZE_KRONO,
+	SIZE_OTHER
+};
+
 int32 NextItemInstSerialNumber = 1;
 
-static inline int32 GetNextItemInstSerialNumber() {
-
+static inline int32 GetNextItemInstSerialNumber()
+{
 	// The Bazaar relies on each item a client has up for Trade having a unique
 	// identifier. This 'SerialNumber' is sent in Serialized item packets and
 	// is used in Bazaar packets to identify the item a player is buying or inspecting.
@@ -44,21 +57,31 @@ static inline int32 GetNextItemInstSerialNumber() {
 	// NextItemInstSerialNumber is the next one to hand out.
 	//
 	// It is very unlikely to reach 2,147,483,647. Maybe we should call abort(), rather than wrapping back to 1.
-	if(NextItemInstSerialNumber >= INT_MAX)
-		NextItemInstSerialNumber = 1;
-	else
-		NextItemInstSerialNumber++;
+	
+	if(NextItemInstSerialNumber >= INT_MAX) { NextItemInstSerialNumber = 1; }
+	else { NextItemInstSerialNumber++; }
 
 	return NextItemInstSerialNumber;
 }
 
 
-
+/*
+ Class: ManagedCursor ######################################################################
+	<description>
+ ###########################################################################################
+*/
 ManagedCursor::~ManagedCursor()
 {
-
+	// Will probably apply methods to 'Inventory' class to avoid additional coding and handlers
 }
+// ###########################################################################################
 
+
+/*
+ Class: ItemInstQueue ######################################################################
+	DEPRECATED
+ ###########################################################################################
+*/
 ItemInstQueue::~ItemInstQueue() {
 	iter_queue cur,end;
 	cur = m_list.begin();
@@ -69,61 +92,6 @@ ItemInstQueue::~ItemInstQueue() {
 	}
 	m_list.clear();
 }
-
-Inventory::~Inventory() {
-	std::map<int16, ItemInst*>::iterator cur,end;
-
-
-	cur = m_worn.begin();
-	end = m_worn.end();
-	for(; cur != end; cur++) {
-		ItemInst *tmp = cur->second;
-		safe_delete(tmp);
-	}
-	m_worn.clear();
-
-	cur = m_inv.begin();
-	end = m_inv.end();
-	for(; cur != end; cur++) {
-		ItemInst *tmp = cur->second;
-		safe_delete(tmp);
-	}
-	m_inv.clear();
-
-	cur = m_bank.begin();
-	end = m_bank.end();
-	for(; cur != end; cur++) {
-		ItemInst *tmp = cur->second;
-		safe_delete(tmp);
-	}
-	m_bank.clear();
-
-	cur = m_shbank.begin();
-	end = m_shbank.end();
-	for(; cur != end; cur++) {
-		ItemInst *tmp = cur->second;
-		safe_delete(tmp);
-	}
-	m_shbank.clear();
-
-	cur = m_trade.begin();
-	end = m_trade.end();
-	for(; cur != end; cur++) {
-		ItemInst *tmp = cur->second;
-		safe_delete(tmp);
-	}
-	m_trade.clear();
-}
-
-InventoryLimits::~InventoryLimits()
-{
-	memset(this, 0, sizeof(InventoryLimits));
-}
-
-
-
-
-// <type> ManagedCursor::<function>() - Start
 
 // Put item onto back of queue
 void ItemInstQueue::push(ItemInst* inst)
@@ -153,6 +121,69 @@ ItemInst* ItemInstQueue::peek_front() const
 {
 	return (m_list.size()==0) ? nullptr : m_list.front();
 }
+// ###########################################################################################
+
+
+/*
+ Class: Inventory ######################################################################
+	<description>
+ #######################################################################################
+*/
+// Class deconstructor
+Inventory::~Inventory()
+{
+	std::map<int16, ItemInst*>::iterator cur, end;
+
+	cur = m_worn.begin();
+	end = m_worn.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst *tmp = cur->second;
+		safe_delete(tmp);
+	}
+
+	m_worn.clear();
+
+	cur = m_inv.begin();
+	end = m_inv.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst *tmp = cur->second;
+		safe_delete(tmp);
+	}
+
+	m_inv.clear();
+
+	cur = m_bank.begin();
+	end = m_bank.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst *tmp = cur->second;
+		safe_delete(tmp);
+	}
+
+	m_bank.clear();
+
+	cur = m_shbank.begin();
+	end = m_shbank.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst *tmp = cur->second;
+		safe_delete(tmp);
+	}
+
+	m_shbank.clear();
+
+	cur = m_trade.begin();
+	end = m_trade.end();
+	for(; cur != end; cur++)
+	{
+		ItemInst *tmp = cur->second;
+		safe_delete(tmp);
+	}
+
+	m_trade.clear();
+}
 
 // Retrieve item at specified slot; returns false if item not found
 ItemInst* Inventory::GetItem(int16 slot_id) const
@@ -161,73 +192,92 @@ ItemInst* Inventory::GetItem(int16 slot_id) const
 	ItemInst* result = nullptr;
 
 	// Cursor
-	if (slot_id == SLOT_CURSOR) {
-		// Cursor slot
+	if(slot_id == SLOT_CURSOR)
+	{
 		result = m_cursor.peek_front();
 	}
 
 	// Non bag slots
-	else if (slot_id>=3000 && slot_id<=3007) {
+	else if(slot_id >= 3000 && slot_id <= 3007)
+	{
 		// Trade slots
 		result = _GetItem(m_trade, slot_id);
 	}
-	else if (slot_id>=2500 && slot_id<=2501) {
+	else if(slot_id >= 2500 && slot_id <= 2501)
+	{
 		// Shared Bank slots
 		result = _GetItem(m_shbank, slot_id);
 	}
-	else if (slot_id>=2000 && slot_id<=2023) {
+	else if(slot_id >= 2000 && slot_id <= 2023)
+	{
 		// Bank slots
 		result = _GetItem(m_bank, slot_id);
 	}
-	else if ((slot_id>=22 && slot_id<=29)) {
+	else if((slot_id >= 22 && slot_id <= 29))
+	{
 		// Personal inventory slots
 		result = _GetItem(m_inv, slot_id);
 	}
-	else if ((slot_id>=0 && slot_id<=21) || (slot_id >= 400 && slot_id<=404) || (slot_id == 9999)) {
+	else if((slot_id >= 0 && slot_id <= 21) || (slot_id >= 400 && slot_id <= 404) || (slot_id == 9999))
+	{
 		// Equippable slots (on body)
 		result = _GetItem(m_worn, slot_id);
 	}
 
 	// Inner bag slots
-	else if (slot_id>=3031 && slot_id<=3110) {
+	else if(slot_id >= 3031 && slot_id <= 3110)
+	{
 		// Trade bag slots
 		ItemInst* inst = _GetItem(m_trade, Inventory::CalcSlotId(slot_id));
-		if (inst && inst->IsType(ItemClassContainer)) {
+
+		if (inst && inst->IsType(ItemClassContainer))
+		{
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id>=2531 && slot_id<=2550) {
+	else if(slot_id >= 2531 && slot_id <= 2550)
+	{
 		// Shared Bank bag slots
 		ItemInst* inst = _GetItem(m_shbank, Inventory::CalcSlotId(slot_id));
-		if (inst && inst->IsType(ItemClassContainer)) {
+
+		if (inst && inst->IsType(ItemClassContainer))
+		{
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id>=2031 && slot_id<=2270) {
+	else if(slot_id >= 2031 && slot_id <= 2270)
+	{
 		// Bank bag slots
 		ItemInst* inst = _GetItem(m_bank, Inventory::CalcSlotId(slot_id));
-		if (inst && inst->IsType(ItemClassContainer)) {
+
+		if (inst && inst->IsType(ItemClassContainer))
+		{
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id>=331 && slot_id<=340) {
+	else if(slot_id >= 331 && slot_id <= 340)
+	{
 		// Cursor bag slots
 		ItemInst* inst = m_cursor.peek_front();
-		if (inst && inst->IsType(ItemClassContainer)) {
+
+		if (inst && inst->IsType(ItemClassContainer))
+		{
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
-	else if (slot_id>=251 && slot_id<=330) {
+	else if(slot_id >= 251 && slot_id <= 330)
+	{
 		// Personal inventory bag slots
 		ItemInst* inst = _GetItem(m_inv, Inventory::CalcSlotId(slot_id));
-		if (inst && inst->IsType(ItemClassContainer)) {
+
+		if (inst && inst->IsType(ItemClassContainer))
+		{
 			result = inst->GetItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
 
 	return result;
 }
-
 
 // Retrieve item at specified position within bag
 ItemInst* Inventory::GetItem(int16 slot_id, uint8 bagidx) const
@@ -247,11 +297,9 @@ int16 Inventory::PutItem(int16 slot_id, const ItemInst& inst)
 	// Clean up item already in slot (if exists)
 	DeleteItem(slot_id);
 
-	if (!inst) {
-		// User is effectively deleting the item
-		// in the slot, why hold a null ptr in map<>?
-		return slot_id;
-	}
+	// User is effectively deleting the item
+	// in the slot, why hold a null ptr in map<>?
+	if(!inst) { return slot_id; }
 
 	// Delegate to internal method
 	return _PutItem(slot_id, inst.Clone());
@@ -264,8 +312,10 @@ bool Inventory::SwapItem(int16 slot_a, int16 slot_b)
 	ItemInst* inst_a = GetItem(slot_a);
 	ItemInst* inst_b = GetItem(slot_b);
 
-	if(inst_a) { if(!inst_a->IsSlotAllowed(slot_b)) { return false; } }
-	if(inst_b) { if(!inst_b->IsSlotAllowed(slot_a)) { return false; } }
+	InventorySlot_Struct placeholder; // placeholder for ItemInst->IsSlotAllowed() check
+
+	if(inst_a && !inst_a->IsSlotAllowed(placeholder /*slot_b*/)) { return false; }
+	if(inst_b && !inst_b->IsSlotAllowed(placeholder /*slot_a*/)) { return false; }
 
 	_PutItem(slot_a, inst_b); // Copy b->a
 	_PutItem(slot_b, inst_a); // Copy a->b
@@ -278,7 +328,6 @@ bool Inventory::SwapItem(int16 slot_a, int16 slot_b)
 
 //This function has a flaw in that it only returns the last stack that it looked at
 //when quantity is greater than 1 and not all of quantity can be found in 1 stack.
-
 int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
 {
 	_CP(Inventory_HasItem);
@@ -288,88 +337,99 @@ int16 Inventory::HasItem(uint32 item_id, uint8 quantity, uint8 where)
 	//where to search, with a default value to maintain compatibility
 
 	// Check each inventory bucket
-	if(where & invWhereWorn) {
+	if(where & invWhereWorn)
+	{
 		slot_id = _HasItem(m_worn, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWherePersonal) {
+	if(where & invWherePersonal)
+	{
 		slot_id = _HasItem(m_inv, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereBank) {
+	if(where & invWhereBank)
+	{
 		slot_id = _HasItem(m_bank, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereSharedBank) {
+	if(where & invWhereSharedBank)
+	{
 		slot_id = _HasItem(m_shbank, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereTrading) {
+	if(where & invWhereTrading)
+	{
 		slot_id = _HasItem(m_trade, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereCursor) {
+	if(where & invWhereCursor)
+	{
 		// Check cursor queue
 		slot_id = _HasItem(m_cursor, item_id, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
 	return slot_id;
 }
 
 //this function has the same quantity flaw mentioned above in HasItem()
-
 int16 Inventory::HasItemByUse(uint8 use, uint8 quantity, uint8 where)
 {
 	int16 slot_id = SLOT_INVALID;
 
 	// Check each inventory bucket
-	if(where & invWhereWorn) {
+	if(where & invWhereWorn)
+	{
 		slot_id = _HasItemByUse(m_worn, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWherePersonal) {
+	if(where & invWherePersonal)
+	{
 		slot_id = _HasItemByUse(m_inv, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereBank) {
+	if(where & invWhereBank)
+	{
 		slot_id = _HasItemByUse(m_bank, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereSharedBank) {
+	if(where & invWhereSharedBank)
+	{
 		slot_id = _HasItemByUse(m_shbank, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereTrading) {
+	if(where & invWhereTrading)
+	{
 		slot_id = _HasItemByUse(m_trade, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereCursor) {
+	if(where & invWhereCursor)
+	{
 		// Check cursor queue
 		slot_id = _HasItemByUse(m_cursor, use, quantity);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
 	return slot_id;
@@ -380,79 +440,85 @@ int16 Inventory::HasItemByLoreGroup(uint32 loregroup, uint8 where)
 	int16 slot_id = SLOT_INVALID;
 
 	// Check each inventory bucket
-	if(where & invWhereWorn) {
+	if(where & invWhereWorn)
+	{
 		slot_id = _HasItemByLoreGroup(m_worn, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWherePersonal) {
+	if(where & invWherePersonal)
+	{
 		slot_id = _HasItemByLoreGroup(m_inv, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereBank) {
+	if(where & invWhereBank)
+	{
 		slot_id = _HasItemByLoreGroup(m_bank, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereSharedBank) {
+	if(where & invWhereSharedBank)
+	{
 		slot_id = _HasItemByLoreGroup(m_shbank, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereTrading) {
+	if(where & invWhereTrading)
+	{
 		slot_id = _HasItemByLoreGroup(m_trade, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
-	if(where & invWhereCursor) {
+	if(where & invWhereCursor)
+	{
 		// Check cursor queue
 		slot_id = _HasItemByLoreGroup(m_cursor, loregroup);
-		if (slot_id != SLOT_INVALID)
-			return slot_id;
+
+		if(slot_id != SLOT_INVALID) { return slot_id; }
 	}
 
 	return slot_id;
 }
 
-bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
-
-	if(ItemToTry->Stackable) {
-
-		for(int16 i = 22; i <= 29; i++) {
-
+// Since we don't return an actual location with this method, we should truncate this code to use
+// one outer and one inner loop since the actual slot will be found eventually
+bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity)
+{
+	if(ItemToTry->Stackable)
+	{
+		for(int16 i = 22; i <= 29; i++)
+		{
 			ItemInst* InvItem = GetItem(i);
 
-			if(InvItem && (InvItem->GetItem()->ID == ItemToTry->ID) && (InvItem->GetCharges() < InvItem->GetItem()->StackSize)) {
-
+			if(InvItem && (InvItem->GetItem()->ID == ItemToTry->ID) && (InvItem->GetCharges() < InvItem->GetItem()->StackSize))
+			{
 				int ChargeSlotsLeft = InvItem->GetItem()->StackSize - InvItem->GetCharges();
 
-				if(Quantity <= ChargeSlotsLeft)
-					return true;
+				if(Quantity <= ChargeSlotsLeft) { return true; }
 
 				Quantity -= ChargeSlotsLeft;
-
 			}
-			if (InvItem && InvItem->IsType(ItemClassContainer)) {
 
+			if(InvItem && InvItem->IsType(ItemClassContainer))
+			{
 				int16 BaseSlotID = Inventory::CalcSlotId(i, 0);
 				uint8 BagSize=InvItem->GetItem()->BagSlots;
-				for (uint8 BagSlot = 0; BagSlot < BagSize; BagSlot++) {
-
+				for(uint8 BagSlot = 0; BagSlot < BagSize; BagSlot++)
+				{
 					InvItem = GetItem(BaseSlotID + BagSlot);
 
 					if(InvItem && (InvItem->GetItem()->ID == ItemToTry->ID) &&
-						(InvItem->GetCharges() < InvItem->GetItem()->StackSize)) {
-
+						(InvItem->GetCharges() < InvItem->GetItem()->StackSize))
+					{
 						int ChargeSlotsLeft = InvItem->GetItem()->StackSize - InvItem->GetCharges();
 
-						if(Quantity <= ChargeSlotsLeft)
-							return true;
+						if(Quantity <= ChargeSlotsLeft) { return true; }
 
 						Quantity -= ChargeSlotsLeft;
 					}
@@ -461,50 +527,42 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 		}
 	}
 
-	for (int16 i = 22; i <= 29; i++) {
-
+	for(int16 i = 22; i <= 29; i++)
+	{
 		ItemInst* InvItem = GetItem(i);
 
-		if (!InvItem) {
-
-			if(!ItemToTry->Stackable) {
-
-				if(Quantity == 1)
-					return true;
-				else
-					Quantity--;
+		if (!InvItem)
+		{
+			if(!ItemToTry->Stackable)
+			{
+				if(Quantity == 1) { return true; }
+				else { Quantity--; }
 			}
-			else {
-				if(Quantity <= ItemToTry->StackSize)
-					return true;
-				else
-					Quantity -= ItemToTry->StackSize;
+			else
+			{
+				if(Quantity <= ItemToTry->StackSize) { return true; }
+				else { Quantity -= ItemToTry->StackSize; }
 			}
-
 		}
-		else if(InvItem->IsType(ItemClassContainer) && CanItemFitInContainer(ItemToTry, InvItem->GetItem())) {
-
+		else if(InvItem->IsType(ItemClassContainer) && CanItemFitInContainer(ItemToTry, InvItem->GetItem()))
+		{
 			int16 BaseSlotID = Inventory::CalcSlotId(i, 0);
-
-			uint8 BagSize=InvItem->GetItem()->BagSlots;
-
-			for (uint8 BagSlot=0; BagSlot<BagSize; BagSlot++) {
-
+			uint8 BagSize = InvItem->GetItem()->BagSlots;
+			for(uint8 BagSlot = 0; BagSlot < BagSize; BagSlot++)
+			{
 				InvItem = GetItem(BaseSlotID + BagSlot);
 
-				if(!InvItem) {
-					if(!ItemToTry->Stackable) {
-
-						if(Quantity == 1)
-							return true;
-						else
-							Quantity--;
+				if(!InvItem)
+				{
+					if(!ItemToTry->Stackable)
+					{
+						if(Quantity == 1) { return true; }
+						else { Quantity--; }
 					}
-					else {
-						if(Quantity <= ItemToTry->StackSize)
-							return true;
-						else
-							Quantity -= ItemToTry->StackSize;
+					else
+					{
+						if(Quantity <= ItemToTry->StackSize) { return true; }
+						else { Quantity -= ItemToTry->StackSize; }
 					}
 				}
 			}
@@ -512,7 +570,6 @@ bool Inventory::HasSpaceForItem(const Item_Struct *ItemToTry, int16 Quantity) {
 	}
 
 	return false;
-
 }
 
 // Remove item from inventory (with memory delete)
@@ -523,17 +580,19 @@ bool Inventory::DeleteItem(int16 slot_id, uint8 quantity)
 
 	// Determine if object should be fully deleted, or
 	// just a quantity of charges of the item can be deleted
-	if (item_to_delete && (quantity > 0)) {
-
+	if(item_to_delete && (quantity > 0))
+	{
 		item_to_delete->SetCharges(item_to_delete->GetCharges() - quantity);
 
 		// If there are no charges left on the item,
-		if(item_to_delete->GetCharges() <= 0) {
+		if(item_to_delete->GetCharges() <= 0)
+		{
 			// If the item is stackable (e.g arrows), or
 			// the item is not stackable, and is not a charged item, or is expendable, delete it
 			if(item_to_delete->IsStackable() ||
 				(!item_to_delete->IsStackable() &&
-				((item_to_delete->GetItem()->MaxCharges == 0) || item_to_delete->IsExpendable()))) {
+				((item_to_delete->GetItem()->MaxCharges == 0) || item_to_delete->IsExpendable())))
+			{
 				// Item can now be destroyed
 				safe_delete(item_to_delete);
 				return true;
@@ -546,22 +605,28 @@ bool Inventory::DeleteItem(int16 slot_id, uint8 quantity)
 	}
 
 	safe_delete(item_to_delete);
-
 	return true;
-
 }
 
 // Checks All items in a bag for No Drop
-bool Inventory::CheckNoDrop(int16 slot_id) {
+bool Inventory::CheckNoDrop(int16 slot_id)
+{
 	ItemInst* inst = GetItem(slot_id);
-	if (!inst) return false;
-	if (!inst->GetItem()->NoDrop) return true;
-	if (inst->GetItem()->ItemClass == 1) {
-		for (uint8 i = 0; i < 10; i++) {
+
+	if(!inst) { return false; }
+
+	if(!inst->GetItem()->NoDrop) { return true; }
+
+	if(inst->GetItem()->ItemClass == 1)
+	{
+		for(uint8 i = 0; i < 10; i++)
+		{
 			ItemInst* bagitem = GetItem(Inventory::CalcSlotId(slot_id, i));
-			if (bagitem && !bagitem->GetItem()->NoDrop) return true;
+
+			if(bagitem && !bagitem->GetItem()->NoDrop) { return true; }
 		}
 	}
+
 	return false;
 }
 
@@ -571,33 +636,42 @@ ItemInst* Inventory::PopItem(int16 slot_id)
 {
 	ItemInst* p = nullptr;
 
-	if (slot_id==SLOT_CURSOR) { // Cursor
+	if(slot_id == SLOT_CURSOR)
+	{ // Cursor
 		p = m_cursor.pop();
 	}
-	else if ((slot_id>=0 && slot_id<=21) || (slot_id >= 400 && slot_id<=404) || (slot_id == 9999)) { // Worn slots
+	else if((slot_id >= 0 && slot_id <= 21) || (slot_id >= 400 && slot_id <= 404) || (slot_id == 9999))
+	{ // Worn slots
 		p = m_worn[slot_id];
 		m_worn.erase(slot_id);
 	}
-	else if ((slot_id>=22 && slot_id<=29)) {
+	else if((slot_id >= 22 && slot_id <= 29))
+	{
 		p = m_inv[slot_id];
 		m_inv.erase(slot_id);
 	}
-	else if (slot_id>=2000 && slot_id<=2023) { // Bank slots
+	else if(slot_id >= 2000 && slot_id <= 2023)
+	{ // Bank slots
 		p = m_bank[slot_id];
 		m_bank.erase(slot_id);
 	}
-	else if (slot_id>=2500 && slot_id<=2501) { // Shared bank slots
+	else if(slot_id >= 2500 && slot_id <= 2501)
+	{ // Shared bank slots
 		p = m_shbank[slot_id];
 		m_shbank.erase(slot_id);
 	}
-	else if (slot_id>=3000 && slot_id<=3007) { // Trade window slots
+	else if(slot_id >= 3000 && slot_id <= 3007)
+	{ // Trade window slots
 		p = m_trade[slot_id];
 		m_trade.erase(slot_id);
 	}
-	else {
+	else
+	{
 		// Is slot inside bag?
 		ItemInst* baginst = GetItem(Inventory::CalcSlotId(slot_id));
-		if (baginst != nullptr && baginst->IsType(ItemClassContainer)) {
+
+		if(baginst != nullptr && baginst->IsType(ItemClassContainer))
+		{
 			p = baginst->PopItem(Inventory::CalcBagIdx(slot_id));
 		}
 	}
@@ -611,16 +685,19 @@ ItemInst* Inventory::PopItem(int16 slot_id)
 int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, bool is_arrow)
 {
 	// Check basic inventory
-	for (int16 i=22; i<=29; i++) {
-		if (!GetItem(i))
-			// Found available slot in personal inventory
-			return i;
+	for(int16 i=22; i<=29; i++)
+	{
+		// Found available slot in personal inventory
+		if(!GetItem(i)) { return i; }
 	}
 
-	if (!for_bag) {
-		for (int16 i=22; i<=29; i++) {
+	if(!for_bag)
+	{
+		for (int16 i = 22; i <= 29; i++)
+		{
 			const ItemInst* inst = GetItem(i);
-			if (inst && inst->IsType(ItemClassContainer)
+
+			if(inst && inst->IsType(ItemClassContainer)
 				&& inst->GetItem()->BagSize >= min_size)
 			{
 				if(inst->GetItem()->BagType == bagTypeQuiver && inst->GetItem()->ItemType != ItemTypeArrow)
@@ -630,10 +707,11 @@ int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, boo
 
 				int16 base_slot_id = Inventory::CalcSlotId(i, 0);
 
-				uint8 slots=inst->GetItem()->BagSlots;
+				uint8 slots = inst->GetItem()->BagSlots;
 				uint8 j;
-				for (j=0; j<slots; j++) {
-					if (!GetItem(base_slot_id + j))
+				for(j = 0; j < slots; j++)
+				{
+					if(!GetItem(base_slot_id + j))
 						// Found available slot within bag
 						return (base_slot_id + j);
 				}
@@ -641,78 +719,85 @@ int16 Inventory::FindFreeSlot(bool for_bag, bool try_cursor, uint8 min_size, boo
 		}
 	}
 
-	if (try_cursor)
-		// Always room on cursor (it's a queue)
-		// (we may wish to cap this in the future)
-		return SLOT_CURSOR;
+	// Always room on cursor (it's a queue)
+	// (we may wish to cap this in the future)
+	if(try_cursor) { return SLOT_CURSOR; }
+
+	// Note on cursor: We may want to be a little lenient with try_cursor using the following:
+	// cursor (Slot_Cursor) >> limbo (to Max) >> deleted (to Max), and then delete any items above this.
+	// If they can't clear their cursors before filling up limbo and deleted, I have no sympathy...
 
 	// No available slots
 	return SLOT_INVALID;
 }
 
-void Inventory::dumpBagContents(ItemInst *inst, iter_inst *it) {
+void Inventory::dumpBagContents(ItemInst *inst, iter_inst *it)
+{
 	iter_contents itb;
 
-	if (!inst || !inst->IsType(ItemClassContainer)) 
-		return;
+	if(!inst || !inst->IsType(ItemClassContainer)) { return; }
 
 	// Go through bag, if bag
-	for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+	for(itb = inst->_begin(); itb != inst->_end(); itb++)
+	{
 		ItemInst* baginst = itb->second;
-		if(!baginst || !baginst->GetItem())
-			continue;
+
+		if(!baginst || !baginst->GetItem()) { continue; }
 
 		std::string subSlot;
 		StringFormat(subSlot,"	Slot %d: %s (%d)", Inventory::CalcSlotId((*it)->first, itb->first),
-			baginst->GetItem()->Name, (baginst->GetCharges()<=0) ? 1 : baginst->GetCharges());
+			baginst->GetItem()->Name, (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges());
 		std::cout << subSlot << std::endl;
 	}
-
 }
 
-void Inventory::dumpItemCollection(const std::map<int16, ItemInst*> &collection) {
+void Inventory::dumpItemCollection(const std::map<int16, ItemInst*> &collection)
+{
 	iter_inst it;
 	iter_contents itb;
 	ItemInst* inst = nullptr;
 	
-	for (it=collection.begin(); it!=collection.end(); it++) {
+	for(it = collection.begin(); it != collection.end(); it++)
+	{
 		inst = it->second;
 		it->first;
-		if(!inst || !inst->GetItem())
-			continue;
+
+		if(!inst || !inst->GetItem()) { continue; }
 		
 		std::string slot;
-		StringFormat(slot, "Slot %d: %s (%d)",it->first, it->second->GetItem()->Name, (inst->GetCharges()<=0) ? 1 : inst->GetCharges());
+		StringFormat(slot, "Slot %d: %s (%d)", it->first, it->second->GetItem()->Name, (inst->GetCharges() <= 0) ? 1 : inst->GetCharges());
 		std::cout << slot << std::endl;		
 
 		dumpBagContents(inst, &it);
 	}
 }
 
-void Inventory::dumpWornItems() {
+void Inventory::dumpWornItems()
+{
 	std::cout << "Worn items:" << std::endl;
 	dumpItemCollection(m_worn);
 }
 
-void Inventory::dumpInventory() {
+void Inventory::dumpInventory()
+{
 	std::cout << "Inventory items:" << std::endl;
 	dumpItemCollection(m_inv);
 }
 
-void Inventory::dumpBankItems() {
-	
+void Inventory::dumpBankItems()
+{
 	std::cout << "Bank items:" << std::endl;
 	dumpItemCollection(m_bank);
 }
 
-void Inventory::dumpSharedBankItems() {
-	
+void Inventory::dumpSharedBankItems()
+{
 	std::cout << "Shared Bank items:" << std::endl;
 	dumpItemCollection(m_shbank);
 }
 
-void Inventory::dumpEntireInventory() {
-
+void Inventory::dumpEntireInventory()
+{
 	dumpWornItems();
 	dumpInventory();
 	dumpBankItems();
@@ -725,9 +810,8 @@ void Inventory::dumpEntireInventory() {
 ItemInst* Inventory::_GetItem(const std::map<int16, ItemInst*>& bucket, int16 slot_id) const
 {
 	iter_inst it = bucket.find(slot_id);
-	if (it != bucket.end()) {
-		return it->second;
-	}
+
+	if(it != bucket.end()) { return it->second; }
 
 	// Not found!
 	return nullptr;
@@ -738,7 +822,8 @@ ItemInst* Inventory::_GetItem(const std::map<int16, ItemInst*>& bucket, int16 sl
 int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 {
 	// If putting a nullptr into slot, we need to remove slot without memory delete
-	if (inst == nullptr) {
+	if(inst == nullptr)
+	{
 		//Why do we not delete the poped item here????
 		PopItem(slot_id);
 		return slot_id;
@@ -746,42 +831,52 @@ int16 Inventory::_PutItem(int16 slot_id, ItemInst* inst)
 
 	int16 result = SLOT_INVALID;
 
-	if (slot_id==SLOT_CURSOR) { // Cursor
+	if(slot_id == SLOT_CURSOR)
+	{ // Cursor
 		// Replace current item on cursor, if exists
 		m_cursor.pop(); // no memory delete, clients of this function know what they are doing
 		m_cursor.push_front(inst);
 		result = slot_id;
 	}
-	else if ((slot_id>=0 && slot_id<=21) || (slot_id >= 400 && slot_id<=404) || (slot_id == 9999)) { // Worn slots
+	else if((slot_id >= 0 && slot_id <= 21) || (slot_id >= 400 && slot_id <= 404) || (slot_id == 9999))
+	{ // Worn slots
 		m_worn[slot_id] = inst;
 		result = slot_id;
 	}
-	else if ((slot_id>=22 && slot_id<=29)) {
+	else if((slot_id >= 22 && slot_id <= 29))
+	{
 		m_inv[slot_id] = inst;
 		result = slot_id;
 	}
-	else if (slot_id>=2000 && slot_id<=2023) { // Bank slots
+	else if(slot_id >= 2000 && slot_id <= 2023)
+	{ // Bank slots
 		m_bank[slot_id] = inst;
 		result = slot_id;
 	}
-	else if (slot_id>=2500 && slot_id<=2501) { // Shared bank slots
+	else if(slot_id >= 2500 && slot_id <= 2501)
+	{ // Shared bank slots
 		m_shbank[slot_id] = inst;
 		result = slot_id;
 	}
-	else if (slot_id>=3000 && slot_id<=3007) { // Trade window slots
+	else if(slot_id >= 3000 && slot_id <= 3007)
+	{ // Trade window slots
 		m_trade[slot_id] = inst;
 		result = slot_id;
 	}
-	else {
+	else
+	{
 		// Slot must be within a bag
 		ItemInst* baginst = GetItem(Inventory::CalcSlotId(slot_id)); // Get parent bag
-		if (baginst && baginst->IsType(ItemClassContainer)) {
+
+		if(baginst && baginst->IsType(ItemClassContainer))
+		{
 			baginst->_PutItem(Inventory::CalcBagIdx(slot_id), inst);
 			result = slot_id;
 		}
 	}
 
-	if (result == SLOT_INVALID) {
+	if(result == SLOT_INVALID)
+	{
 		LogFile->write(EQEMuLog::Error, "Inventory::_PutItem: Invalid slot_id specified (%i)", slot_id);
 		safe_delete(inst); // Slot not found, clean up
 	}
@@ -798,33 +893,42 @@ int16 Inventory::_HasItem(std::map<int16, ItemInst*>& bucket, uint32 item_id, ui
 	uint8 quantity_found = 0;
 
 	// Check item: After failed checks, check bag contents (if bag)
-	for (it=bucket.begin(); it!=bucket.end(); it++) {
+	for(it = bucket.begin(); it != bucket.end(); it++)
+	{
 		inst = it->second;
-		if (inst) {
-			if (inst->GetID() == item_id) {
-				quantity_found += (inst->GetCharges()<=0) ? 1 : inst->GetCharges();
-				if (quantity_found >= quantity)
-					return it->first;
+
+		if(inst)
+		{
+			if(inst->GetID() == item_id)
+			{
+				quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
+
+				if(quantity_found >= quantity) { return it->first; }
 			}
 
-			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
-				if (inst->GetAugmentItemID(i) == item_id && quantity <= 1)
-					return SLOT_AUGMENT; // Only one augment per slot.
+			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+			{
+				if(inst->GetAugmentItemID(i) == item_id && quantity <= 1) { return SLOT_AUGMENT; } // Only one augment per slot.
 			}
 		}
-		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
 
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		// Go through bag, if bag
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst->GetID() == item_id) {
-					quantity_found += (baginst->GetCharges()<=0) ? 1 : baginst->GetCharges();
-					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(it->first, itb->first);
+
+				if(baginst->GetID() == item_id)
+				{
+					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
+
+					if(quantity_found >= quantity) { return Inventory::CalcSlotId(it->first, itb->first); }
 				}
-				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
-					if (baginst->GetAugmentItemID(i) == item_id && quantity <= 1)
-						return SLOT_AUGMENT; // Only one augment per slot.
+
+				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+				{
+					if(baginst->GetAugmentItemID(i) == item_id && quantity <= 1) { return SLOT_AUGMENT; } // Only one augment per slot.
 				}
 			}
 		}
@@ -842,35 +946,43 @@ int16 Inventory::_HasItem(ItemInstQueue& iqueue, uint32 item_id, uint8 quantity)
 	uint8 quantity_found = 0;
 
 	// Read-only iteration of queue
-	for (it=iqueue.begin(); it!=iqueue.end(); it++) {
+	for(it = iqueue.begin(); it != iqueue.end(); it++)
+	{
 		ItemInst* inst = *it;
-		if (inst)
+
+		if(inst)
 		{
-			if (inst->GetID() == item_id) {
-				quantity_found += (inst->GetCharges()<=0) ? 1 : inst->GetCharges();
-				if (quantity_found >= quantity)
-					return SLOT_CURSOR;
+			if(inst->GetID() == item_id)
+			{
+				quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
+
+				if(quantity_found >= quantity) { return SLOT_CURSOR; }
 			}
-			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
-				if (inst->GetAugmentItemID(i) == item_id && quantity <= 1)
-					return SLOT_AUGMENT; // Only one augment per slot.
+
+			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+			{
+				if(inst->GetAugmentItemID(i) == item_id && quantity <= 1) { return SLOT_AUGMENT; } // Only one augment per slot.
 			}
 		}
+
 		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
-
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst->GetID() == item_id) {
-					quantity_found += (baginst->GetCharges()<=0) ? 1 : baginst->GetCharges();
-					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
-				}
-				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
-					if (baginst->GetAugmentItemID(i) == item_id && quantity <= 1)
-						return SLOT_AUGMENT; // Only one augment per slot.
+
+				if(baginst->GetID() == item_id)
+				{
+					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
+
+					if(quantity_found >= quantity) { return Inventory::CalcSlotId(SLOT_CURSOR, itb->first); }
 				}
 
+				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+				{
+					if(baginst->GetAugmentItemID(i) == item_id && quantity <= 1) { return SLOT_AUGMENT; } // Only one augment per slot.
+				}
 			}
 		}
 	}
@@ -888,23 +1000,29 @@ int16 Inventory::_HasItemByUse(std::map<int16, ItemInst*>& bucket, uint8 use, ui
 	uint8 quantity_found = 0;
 
 	// Check item: After failed checks, check bag contents (if bag)
-	for (it=bucket.begin(); it!=bucket.end(); it++) {
+	for(it=bucket.begin(); it!=bucket.end(); it++)
+	{
 		inst = it->second;
-		if (inst && inst->IsType(ItemClassCommon) && inst->GetItem()->ItemType == use) {
-			quantity_found += (inst->GetCharges()<=0) ? 1 : inst->GetCharges();
-			if (quantity_found >= quantity)
-				return it->first;
+
+		if(inst && inst->IsType(ItemClassCommon) && inst->GetItem()->ItemType == use)
+		{
+			quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
+
+			if(quantity_found >= quantity) { return it->first; }
 		}
 
 		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
-
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->ItemType == use) {
-					quantity_found += (baginst->GetCharges()<=0) ? 1 : baginst->GetCharges();
-					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(it->first, itb->first);
+
+				if(baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->ItemType == use)
+				{
+					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
+
+					if(quantity_found >= quantity) { return Inventory::CalcSlotId(it->first, itb->first); }
 				}
 			}
 		}
@@ -922,23 +1040,29 @@ int16 Inventory::_HasItemByUse(ItemInstQueue& iqueue, uint8 use, uint8 quantity)
 	uint8 quantity_found = 0;
 
 	// Read-only iteration of queue
-	for (it=iqueue.begin(); it!=iqueue.end(); it++) {
+	for(it = iqueue.begin(); it != iqueue.end(); it++)
+	{
 		ItemInst* inst = *it;
-		if (inst && inst->IsType(ItemClassCommon) && inst->GetItem()->ItemType == use) {
-			quantity_found += (inst->GetCharges()<=0) ? 1 : inst->GetCharges();
-			if (quantity_found >= quantity)
-				return SLOT_CURSOR;
+
+		if(inst && inst->IsType(ItemClassCommon) && inst->GetItem()->ItemType == use)
+		{
+			quantity_found += (inst->GetCharges() <= 0) ? 1 : inst->GetCharges();
+
+			if(quantity_found >= quantity) { return SLOT_CURSOR; }
 		}
 
 		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
-
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->ItemType == use) {
-					quantity_found += (baginst->GetCharges()<=0) ? 1 : baginst->GetCharges();
-					if (quantity_found >= quantity)
-						return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
+
+				if(baginst && baginst->IsType(ItemClassCommon) && baginst->GetItem()->ItemType == use)
+				{
+					quantity_found += (baginst->GetCharges() <= 0) ? 1 : baginst->GetCharges();
+
+					if(quantity_found >= quantity) { return Inventory::CalcSlotId(SLOT_CURSOR, itb->first); }
 				}
 			}
 		}
@@ -955,32 +1079,41 @@ int16 Inventory::_HasItemByLoreGroup(std::map<int16, ItemInst*>& bucket, uint32 
 	ItemInst* inst = nullptr;
 
 	// Check item: After failed checks, check bag contents (if bag)
-	for (it=bucket.begin(); it!=bucket.end(); it++) {
+	for(it = bucket.begin(); it != bucket.end(); it++)
+	{
 		inst = it->second;
-		if (inst) {
-			if (inst->GetItem()->LoreGroup == loregroup)
-				return it->first;
+
+		if(inst)
+		{
+			if(inst->GetItem()->LoreGroup == loregroup) { return it->first; }
 
 			ItemInst* Aug;
-			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
+			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+			{
 				Aug = inst->GetAugment(i);
-				if (Aug && Aug->GetItem()->LoreGroup == loregroup)
-					return SLOT_AUGMENT; // Only one augment per slot.
+
+				if(Aug && Aug->GetItem()->LoreGroup == loregroup) { return SLOT_AUGMENT; } // Only one augment per slot.
 			}
 		}
-		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
 
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		// Go through bag, if bag
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst && baginst->IsType(ItemClassCommon)&& baginst->GetItem()->LoreGroup == loregroup)
+
+				if(baginst && baginst->IsType(ItemClassCommon)&& baginst->GetItem()->LoreGroup == loregroup)
+				{
 					return Inventory::CalcSlotId(it->first, itb->first);
+				}
 
 				ItemInst* Aug2;
-				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
+				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+				{
 					Aug2 = baginst->GetAugment(i);
-					if (Aug2 && Aug2->GetItem()->LoreGroup == loregroup)
-						return SLOT_AUGMENT; // Only one augment per slot.
+
+					if(Aug2 && Aug2->GetItem()->LoreGroup == loregroup) { return SLOT_AUGMENT; } // Only one augment per slot.
 				}
 			}
 		}
@@ -997,36 +1130,42 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 	iter_contents itb;
 
 	// Read-only iteration of queue
-	for (it=iqueue.begin(); it!=iqueue.end(); it++) {
+	for(it = iqueue.begin(); it != iqueue.end(); it++)
+	{
 		ItemInst* inst = *it;
-		if (inst)
+
+		if(inst)
 		{
-			if (inst->GetItem()->LoreGroup == loregroup)
-				return SLOT_CURSOR;
+			if(inst->GetItem()->LoreGroup == loregroup) { return SLOT_CURSOR; }
 
 			ItemInst* Aug;
-			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
+			for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+			{
 				Aug = inst->GetAugment(i);
-				if (Aug && Aug->GetItem()->LoreGroup == loregroup)
-					return SLOT_AUGMENT; // Only one augment per slot.
+
+				if(Aug && Aug->GetItem()->LoreGroup == loregroup) { return SLOT_AUGMENT; } // Only one augment per slot.
 			}
 		}
+
 		// Go through bag, if bag
-		if (inst && inst->IsType(ItemClassContainer)) {
-
-			for (itb=inst->_begin(); itb!=inst->_end(); itb++) {
+		if(inst && inst->IsType(ItemClassContainer))
+		{
+			for(itb = inst->_begin(); itb != inst->_end(); itb++)
+			{
 				ItemInst* baginst = itb->second;
-				if (baginst && baginst->IsType(ItemClassCommon)&& baginst->GetItem()->LoreGroup == loregroup)
+
+				if(baginst && baginst->IsType(ItemClassCommon)&& baginst->GetItem()->LoreGroup == loregroup)
+				{
 					return Inventory::CalcSlotId(SLOT_CURSOR, itb->first);
-
-
-				ItemInst* Aug2;
-				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++) {
-					Aug2 = baginst->GetAugment(i);
-					if (Aug2 && Aug2->GetItem()->LoreGroup == loregroup)
-						return SLOT_AUGMENT; // Only one augment per slot.
 				}
 
+				ItemInst* Aug2;
+				for(int i = 0; i < MAX_AUGMENT_SLOTS; i++)
+				{
+					Aug2 = baginst->GetAugment(i);
+
+					if(Aug2 && Aug2->GetItem()->LoreGroup == loregroup) { return SLOT_AUGMENT; } // Only one augment per slot.
+				}
 			}
 		}
 	}
@@ -1035,10 +1174,234 @@ int16 Inventory::_HasItemByLoreGroup(ItemInstQueue& iqueue, uint32 loregroup)
 	return SLOT_INVALID;
 }
 
+void Inventory::InvalidateSlotStruct(InventorySlot_Struct &is_struct)
+{
+	is_struct.slottype	= SLOTTYPE_INVALID;
+	is_struct.unknown02	= 0;
+	is_struct.mainslot	= MAINSLOT_INVALID;
+	is_struct.subslot	= SUBSLOT_INVALID;
+	is_struct.augslot	= AUGSLOT_INVALID;
+	is_struct.unknown01	= 0;
+}
+
+bool Inventory::IsValidServerSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return false; }
+
+	// in-work
+
+	return false;
+}
+
+bool Inventory::IsValidMobSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return true; }
+
+	// in-work
+
+	return false;
+}
+
+bool Inventory::IsValidClientSlotStruct(InventorySlot_Struct &is_struct)
+{
+	if(&is_struct == nullptr) { return false; }
+
+	if(IsDeleteRequest(is_struct)) { return true; }
+
+	// in-work
+
+	return false;
+}
+
+// This is only valid for clients and mobs. This position does not exist on the server
+bool Inventory::IsDeleteRequest(InventorySlot_Struct &is_struct)
+{
+	return (is_struct.slottype == SLOTTYPE_INVALID &&
+		is_struct.mainslot == MAINSLOT_INVALID &&
+		is_struct.subslot == SUBSLOT_INVALID &&
+		is_struct.augslot == AUGSLOT_INVALID);
+}
+
+// Calculate slot_id for an item within a bag
+int16 Inventory::CalcSlotId(int16 bagslot_id, uint8 bagidx)
+{
+	if(!Inventory::SupportsContainers(bagslot_id)) { return SLOT_INVALID; }
+
+	int16 slot_id = SLOT_INVALID;
+
+	if(bagslot_id == SLOT_CURSOR || bagslot_id == 8000) // Cursor
+	{
+		slot_id = IDX_CURSOR_BAG + bagidx;
+	}
+	else if(bagslot_id >= 22 && bagslot_id <= 29) // Inventory slots
+	{
+		slot_id = IDX_INV_BAG + (bagslot_id - 22) * MAX_ITEMS_PER_BAG + bagidx;
+	}
+	else if(bagslot_id >= 2000 && bagslot_id <= 2023) // Bank slots
+	{
+		slot_id = IDX_BANK_BAG + (bagslot_id - 2000) * MAX_ITEMS_PER_BAG + bagidx;
+	}
+	else if(bagslot_id >= 2500 && bagslot_id <= 2501) // Shared bank slots
+	{
+		slot_id = IDX_SHBANK_BAG + (bagslot_id - 2500) * MAX_ITEMS_PER_BAG + bagidx;
+	}
+	else if(bagslot_id >= 3000 && bagslot_id <= 3007) // Trade window slots
+	{
+		slot_id = IDX_TRADE_BAG + (bagslot_id - 3000) * MAX_ITEMS_PER_BAG + bagidx;
+	}
+
+	return slot_id;
+}
+
+// Opposite of above: Get parent bag slot_id from a slot inside of bag
+int16 Inventory::CalcSlotId(int16 slot_id)
+{
+	int16 parent_slot_id = SLOT_INVALID;
+
+	if(slot_id >= 251 && slot_id <= 330)
+	{
+		parent_slot_id = IDX_INV + (slot_id - 251) / MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 331 && slot_id <= 340)
+	{
+		parent_slot_id = SLOT_CURSOR;
+	}
+	else if(slot_id >= 2000 && slot_id <= 2023)
+	{
+		parent_slot_id = IDX_BANK + (slot_id - 2000) / MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 2031 && slot_id <= 2270)
+	{
+		parent_slot_id = IDX_BANK + (slot_id - 2031) / MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 2531 && slot_id <= 2550)
+	{
+		parent_slot_id = IDX_SHBANK + (slot_id - 2531) / MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 3100 && slot_id <= 3179)
+	{
+		parent_slot_id = IDX_TRADE + (slot_id - 3100) / MAX_ITEMS_PER_BAG;
+	}
+
+	return parent_slot_id;
+}
+
+uint8 Inventory::CalcBagIdx(int16 slot_id)
+{
+	uint8 index = 0;
+
+	if(slot_id >= 251 && slot_id <= 330)
+	{
+		index = (slot_id - 251) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 331 && slot_id <= 340)
+	{
+		index = (slot_id - 331) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 2000 && slot_id <= 2023)
+	{
+		index = (slot_id - 2000) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 2031 && slot_id <= 2270)
+	{
+		index = (slot_id - 2031) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 2531 && slot_id <= 2550)
+	{
+		index = (slot_id - 2531) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 3100 && slot_id <= 3179)
+	{
+		index = (slot_id - 3100) % MAX_ITEMS_PER_BAG;
+	}
+	else if(slot_id >= 4000 && slot_id <= 4009)
+	{
+		index = (slot_id - 4000) % MAX_ITEMS_PER_BAG;
+	}
+
+	return index;
+}
+
+int16 Inventory::CalcSlotFromMaterial(uint8 material)
+{
+	switch(material)
+	{
+		case MATERIAL_HEAD:			{ return SLOT_HEAD; }
+		case MATERIAL_CHEST:		{ return SLOT_CHEST; }
+		case MATERIAL_ARMS:			{ return SLOT_ARMS; }
+		case MATERIAL_BRACER:		{ return SLOT_BRACER01; } // there's 2 bracers, only one bracer material
+		case MATERIAL_HANDS:		{ return SLOT_HANDS; }
+		case MATERIAL_LEGS:			{ return SLOT_LEGS; }
+		case MATERIAL_FEET:			{ return SLOT_FEET; }
+		case MATERIAL_PRIMARY:		{ return SLOT_PRIMARY; }
+		case MATERIAL_SECONDARY:	{ return SLOT_SECONDARY; }
+		default: { return -1; }
+	}
+}
+
+uint8 Inventory::CalcMaterialFromSlot(int16 equipslot)
+{
+	switch(equipslot)
+	{
+		case SLOT_HEAD:			{ return MATERIAL_HEAD; }
+		case SLOT_CHEST:		{ return MATERIAL_CHEST; }
+		case SLOT_ARMS:			{ return MATERIAL_ARMS; }
+		case SLOT_BRACER01:
+		case SLOT_BRACER02:		{ return MATERIAL_BRACER; }
+		case SLOT_HANDS:		{ return MATERIAL_HANDS; }
+		case SLOT_LEGS:			{ return MATERIAL_LEGS; }
+		case SLOT_FEET:			{ return MATERIAL_FEET; }
+		case SLOT_PRIMARY:		{ return MATERIAL_PRIMARY; }
+		case SLOT_SECONDARY:	{ return MATERIAL_SECONDARY; }
+		default: { return 0xFF; }
+	}
+}
+
+// Test whether a given slot can support a container item
+bool Inventory::SupportsContainers(int16 slot_id)
+{
+	return ((slot_id >= 22 && slot_id <= 30) ||		// Personal inventory slots
+		(slot_id >= 2000 && slot_id <= 2023) ||		// Bank slots
+		(slot_id >= 2500 && slot_id <= 2501) ||		// Shared bank slots
+		(slot_id == SLOT_CURSOR) ||					// Cursor
+		(slot_id >= 3000 && slot_id <= 3007));		// Trade window
+}
+
+bool Inventory::CanItemFitInContainer(const Item_Struct *ItemToTry, const Item_Struct *Container)
+{
+	if(!ItemToTry || !Container) { return false; }
+
+	if(ItemToTry->Size > Container->BagSize) { return false; }
+
+	if((Container->BagType == bagTypeQuiver) && (ItemToTry->ItemType != ItemTypeArrow)) { return false; }
+
+	if((Container->BagType == bagTypeBandolier) && (ItemToTry->ItemType != ItemTypeThrowingv2)) { return false; }
+
+	return true;
+}
+// #######################################################################################
+
+
+/*
+ Class: InventoryLimits ######################################################################
+	<description>
+ #############################################################################################
+*/
+InventoryLimits::~InventoryLimits()
+{
+	memset(this, 0, sizeof(InventoryLimits));
+}
+
 bool InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
 {
-	if(limits.limits_set) { return false; }
+	if(limits.m_limits_set) { return false; }
 	
+	memcpy(limits.m_slottypesize, ServerInventoryLimits, sizeof(InventoryLimits.m_slottypesize));
+	/*
 	limits.m_slottypesize[SlotType_Possessions]			= SIZE_POSSESSIONS;
 	limits.m_slottypesize[SlotType_Bank]				= SIZE_BANK;
 	limits.m_slottypesize[SlotType_SharedBank]			= SIZE_SHAREDBANK;
@@ -1064,6 +1427,7 @@ bool InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
 	limits.m_slottypesize[SlotType_GuildTrophyTribute]	= SIZE_GUILDTROPHYTRIBUTE;
 	limits.m_slottypesize[SlotType_Krono]				= SIZE_KRONO;
 	limits.m_slottypesize[SlotType_Other]				= SIZE_OTHER;
+	*/
 
 	limits.m_equipmentstart								= EQUIPMENT_START;
 	limits.m_equipmentend								= EQUIPMENT_END;
@@ -1077,14 +1441,14 @@ bool InventoryLimits::SetServerInventoryLimits(InventoryLimits &limits)
 	limits.m_bagslotsmax								= MAX_BAGSLOTS;
 	limits.m_augmentsmax								= MAX_AUGMENTS;
 
-	limits.limits_set = true;
+	limits.m_limits_set = true;
 
 	return true;
 }
 
 bool InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
 {
-	if(limits.limits_set) { return false; }
+	if(limits.m_limits_set) { return false; }
 
 	SetServerInventoryLimits(limits);
 	
@@ -1105,14 +1469,14 @@ bool InventoryLimits::SetMobInventoryLimits(InventoryLimits &limits)
 	limits.m_slottypesize[SlotType_Krono]				= SIZE_UNUSED;
 	limits.m_slottypesize[SlotType_Other]				= SIZE_UNUSED;
 
-	limits.limits_set = true;
+	limits.m_limits_set = true;
 
 	return true;
 }
 
 bool InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClientVersion client_version)
 {
-	if(limits.limits_set) { return false; }
+	if(limits.m_limits_set) { return false; }
 	
 	SetServerInventoryLimits(limits);
 	
@@ -1165,212 +1529,30 @@ bool InventoryLimits::SetClientInventoryLimits(InventoryLimits &limits, EQClient
 		// TODO: log error message
 	}
 
-	limits.limits_set = true;
+	limits.m_limits_set = true;
 
 	return true;
 }
 
-
-void Inventory::InvalidateSlotStruct(InventorySlot_Struct &is_struct)
+void InventoryLimits::ResetInventoryLimits()
 {
-	is_struct.slottype = SLOTTYPE_INVALID;
-	is_struct.unknown02 = 0;
-	is_struct.mainslot = MAINSLOT_INVALID;
-	is_struct.subslot = SUBSLOT_INVALID;
-	is_struct.augslot = AUGSLOT_INVALID;
-	is_struct.unknown01 = 0;
+	memset(this->m_slottypesize, 0, sizeof(InventoryLimits.m_slottypesize));
+	
+	m_equipmentstart	= 0;
+	m_equipmentend		= 0;
+	m_equipmentbitmask	= 0;
+	m_personalstart		= 0;
+	m_personalend		= 0;
+	m_personalbitmask	= 0;
+
+	m_bandolierslotsmax		= 0;
+	m_potionbeltslotsmax	= 0;
+	m_bagslotsmax			= 0;
+	m_augmentsmax			= 0;
+
+	m_limits_set = false;
 }
-
-bool Inventory::IsValidServerSlotStruct(InventorySlot_Struct &is_struct)
-{
-	if(&is_struct == nullptr) { return false; }
-
-	if(IsDeleteRequest(is_struct)) { return false; }
-
-	// in-work
-
-	return false;
-}
-
-bool Inventory::IsValidMobSlotStruct(InventorySlot_Struct &is_struct)
-{
-	if(&is_struct == nullptr) { return false; }
-
-	if(IsDeleteRequest(is_struct)) { return true; }
-
-	// in-work
-
-	return false;
-}
-bool Inventory::IsValidClientSlotStruct(InventorySlot_Struct &is_struct)
-{
-	if(&is_struct == nullptr) { return false; }
-
-	if(IsDeleteRequest(is_struct)) { return true; }
-
-	// in-work
-
-	return false;
-}
-
-// This is only valid for clients and mobs. This position does not exist on the server
-bool Inventory::IsDeleteRequest(InventorySlot_Struct &is_struct)
-{
-	if(is_struct.slottype == SLOTTYPE_INVALID &&
-		is_struct.mainslot == MAINSLOT_INVALID &&
-		is_struct.subslot == SUBSLOT_INVALID &&
-		is_struct.augslot == AUGSLOT_INVALID) { return true; }
-
-	return false;
-}
-
-// Calculate slot_id for an item within a bag
-int16 Inventory::CalcSlotId(int16 bagslot_id, uint8 bagidx)
-{
-	if (!Inventory::SupportsContainers(bagslot_id)) {
-		return SLOT_INVALID;
-	}
-
-	int16 slot_id = SLOT_INVALID;
-
-	if (bagslot_id==SLOT_CURSOR || bagslot_id==8000) // Cursor
-		slot_id = IDX_CURSOR_BAG + bagidx;
-	else if (bagslot_id>=22 && bagslot_id<=29) // Inventory slots
-		slot_id = IDX_INV_BAG + (bagslot_id-22)*MAX_ITEMS_PER_BAG + bagidx;
-	else if (bagslot_id>=2000 && bagslot_id<=2023) // Bank slots
-		slot_id = IDX_BANK_BAG + (bagslot_id-2000)*MAX_ITEMS_PER_BAG + bagidx;
-	else if (bagslot_id>=2500 && bagslot_id<=2501) // Shared bank slots
-		slot_id = IDX_SHBANK_BAG + (bagslot_id-2500)*MAX_ITEMS_PER_BAG + bagidx;
-	else if (bagslot_id>=3000 && bagslot_id<=3007) // Trade window slots
-		slot_id = IDX_TRADE_BAG + (bagslot_id-3000)*MAX_ITEMS_PER_BAG + bagidx;
-
-	return slot_id;
-}
-
-// Opposite of above: Get parent bag slot_id from a slot inside of bag
-int16 Inventory::CalcSlotId(int16 slot_id)
-{
-	int16 parent_slot_id = SLOT_INVALID;
-
-	if (slot_id>=251 && slot_id<=330)
-		parent_slot_id = IDX_INV + (slot_id-251) / MAX_ITEMS_PER_BAG;
-	else if (slot_id>=331 && slot_id<=340)
-		parent_slot_id = SLOT_CURSOR;
-	else if (slot_id>=2000 && slot_id<=2023)
-		parent_slot_id = IDX_BANK + (slot_id-2000) / MAX_ITEMS_PER_BAG;
-	else if (slot_id>=2031 && slot_id<=2270)
-		parent_slot_id = IDX_BANK + (slot_id-2031) / MAX_ITEMS_PER_BAG;
-	else if (slot_id>=2531 && slot_id<=2550)
-		parent_slot_id = IDX_SHBANK + (slot_id-2531) / MAX_ITEMS_PER_BAG;
-	else if (slot_id>=3100 && slot_id<=3179)
-		parent_slot_id = IDX_TRADE + (slot_id-3100) / MAX_ITEMS_PER_BAG;
-
-	return parent_slot_id;
-}
-
-uint8 Inventory::CalcBagIdx(int16 slot_id)
-{
-	uint8 index = 0;
-
-	if (slot_id>=251 && slot_id<=330)
-		index = (slot_id-251) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=331 && slot_id<=340)
-		index = (slot_id-331) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=2000 && slot_id<=2023)
-		index = (slot_id-2000) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=2031 && slot_id<=2270)
-		index = (slot_id-2031) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=2531 && slot_id<=2550)
-		index = (slot_id-2531) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=3100 && slot_id<=3179)
-		index = (slot_id-3100) % MAX_ITEMS_PER_BAG;
-	else if (slot_id>=4000 && slot_id<=4009)
-		index = (slot_id-4000) % MAX_ITEMS_PER_BAG;
-
-	return index;
-}
-
-int16 Inventory::CalcSlotFromMaterial(uint8 material)
-{
-	switch(material)
-	{
-		case MATERIAL_HEAD:
-			return SLOT_HEAD;
-		case MATERIAL_CHEST:
-			return SLOT_CHEST;
-		case MATERIAL_ARMS:
-			return SLOT_ARMS;
-		case MATERIAL_BRACER:
-			return SLOT_BRACER01;	// there's 2 bracers, only one bracer material
-		case MATERIAL_HANDS:
-			return SLOT_HANDS;
-		case MATERIAL_LEGS:
-			return SLOT_LEGS;
-		case MATERIAL_FEET:
-			return SLOT_FEET;
-		case MATERIAL_PRIMARY:
-			return SLOT_PRIMARY;
-		case MATERIAL_SECONDARY:
-			return SLOT_SECONDARY;
-		default:
-			return -1;
-	}
-}
-
-uint8 Inventory::CalcMaterialFromSlot(int16 equipslot)
-{
-	switch(equipslot)
-	{
-		case SLOT_HEAD:
-			return MATERIAL_HEAD;
-		case SLOT_CHEST:
-			return MATERIAL_CHEST;
-		case SLOT_ARMS:
-			return MATERIAL_ARMS;
-		case SLOT_BRACER01:
-		case SLOT_BRACER02:
-			return MATERIAL_BRACER;
-		case SLOT_HANDS:
-			return MATERIAL_HANDS;
-		case SLOT_LEGS:
-			return MATERIAL_LEGS;
-		case SLOT_FEET:
-			return MATERIAL_FEET;
-		case SLOT_PRIMARY:
-			return MATERIAL_PRIMARY;
-		case SLOT_SECONDARY:
-			return MATERIAL_SECONDARY;
-		default:
-			return 0xFF;
-	}
-}
-
-
-// Test whether a given slot can support a container item
-bool Inventory::SupportsContainers(int16 slot_id)
-{
-	if ((slot_id>=22 && slot_id<=30) ||		// Personal inventory slots
-		(slot_id>=2000 && slot_id<=2023) ||	// Bank slots
-		(slot_id>=2500 && slot_id<=2501) ||	// Shared bank slots
-		(slot_id==SLOT_CURSOR) ||			// Cursor
-		(slot_id>=3000 && slot_id<=3007))	// Trade window
-		return true;
-	return false;
-}
-
-
-bool Inventory::CanItemFitInContainer(const Item_Struct *ItemToTry, const Item_Struct *Container) {
-
-	if(!ItemToTry || !Container) return false;
-
-	if(ItemToTry->Size > Container->BagSize) return false;
-
-	if((Container->BagType == bagTypeQuiver) && (ItemToTry->ItemType != ItemTypeArrow)) return false;
-
-	if((Container->BagType == bagTypeBandolier) && (ItemToTry->ItemType != ItemTypeThrowingv2)) return false;
-
-	return true;
-}
+// #############################################################################################
 
 
 /*
@@ -1379,7 +1561,6 @@ bool Inventory::CanItemFitInContainer(const Item_Struct *ItemToTry, const Item_S
 	and data specific to an item instance (includes dye, augments, charges, etc)
  ######################################################################################
 */
-
 // Class constructors
 ItemInst::ItemInst(const Item_Struct* item, int16 charges)
 {
@@ -1445,7 +1626,7 @@ ItemInst::ItemInst(const ItemInst& copy)
 	m_customdata	= copy.m_customdata;
 }
 
-// Class deconstructors
+// Class deconstructor
 ItemInst::~ItemInst()
 {
 	Clear();
@@ -1514,14 +1695,9 @@ bool ItemInst::IsAmmo() const
 {
 	if(!m_item) { return false; }
 
-	if((m_item->ItemType == ItemTypeArrow) ||
+	return ((m_item->ItemType == ItemTypeArrow) ||
 		(m_item->ItemType == ItemTypeThrowing) ||
-		(m_item->ItemType == ItemTypeThrowingv2))
-	{
-		return true;
-	}
-
-	return false;
+		(m_item->ItemType == ItemTypeThrowingv2));
 }
 
 bool ItemInst::IsAugmentable() const
@@ -1545,23 +1721,17 @@ bool ItemInst::IsSlotAllowed(InventorySlot_Struct is_struct) const
 	{
 		if(is_struct.slottype == SlotType_Possessions)
 		{
-			if(is_struct.mainslot >= PERSONAL_START && is_struct.mainslot <= Slot_Cursor)
+			if(is_struct.mainslot >= PERSONAL_START && is_struct.mainslot < ServerInventoryLimits[SlotType_Possessions])
 			{
 				// The use of 'm_item->BagSlots' will prevent bag overloading - the use of illegal bag slots
-				// ..otherwise, use '< MAX_BAGSLOTS'
+				// ..otherwise, if there are issues, use '< MAX_BAGSLOTS' (same for below)
 
 				if(is_struct.subslot >= SUBSLOT_INVALID && is_struct.subslot < m_item->BagSlots) { return true; }
 			}
 		}
 		else if(is_struct.slottype > SlotType_Possessions && is_struct.slottype < SlotType_Count)
-		{
-			// This is more cpu intensive, but will suffice until we can work out what
-			// slot types are actually needed so they can possibly be hard-coded
-
-			InventoryLimits il_inst; // should probably delete this..safe_delete() didn't like it...
-			il_inst.SetServerInventoryLimits(il_inst);
-			
-			if(is_struct.mainslot >= MAINSLOT_START && is_struct.mainslot < il_inst[is_struct.slottype])
+		{	
+			if(is_struct.mainslot >= MAINSLOT_START && is_struct.mainslot < ServerInventoryLimits[is_struct.slottype])
 			{
 				if(is_struct.subslot >= SUBSLOT_INVALID && is_struct.subslot < m_item->BagSlots) { return true; }
 			}
@@ -1601,8 +1771,7 @@ bool ItemInst::AvailableWearSlot(uint32 aug_wear_slots) const
 
 bool ItemInst::IsAugmented()
 {
-	// This may need to be added..might be an existing problem for bags with augments stored in them
-	// if(!m_item || m_item->ItemClass != ItemClassCommon) { return false; }
+	if(!m_item || m_item->ItemClass != ItemClassCommon) { return false; }
 	
 	for(int16 aug_slot = AUGSLOT_START; aug_slot < MAX_AUGMENTS; aug_slot++)
 	{
@@ -1616,8 +1785,6 @@ uint8 ItemInst::GetTotalItemCount() const
 {
 	uint8 item_count = 1;
 
-	// This will still be a problem with nullptr, but the iteminst data will still log in qs
-	// (queryserv method will probably be updated to use this function for both bag and augment items)
 	if(!m_item || m_item->ItemClass != ItemClassContainer) { return item_count; }
 
 	for(int16 sub_slot = SUBSLOT_START; sub_slot < m_item->BagSlots; sub_slot++)
@@ -1819,8 +1986,16 @@ void ItemInst::PutItem(SharedDatabase *db, int16 sub_slot, uint32 item_id)
 {
 	if(sub_slot & MCONTENTS_OOR) { return; }
 	
-	// Declared, but undefined..for some reason...
-	// Will probably need to define for m_contents usage in new inventory system
+	if(item_id != 0 && sub_slot < m_item->BagSlots)
+	{
+		const ItemInst* bag_item = db->CreateItem(item_id);
+
+		if(bag_item)
+		{
+			PutAugment(sub_slot, *bag_item);
+			safe_delete(bag_item);
+		}
+	}
 }
 
 ItemInst* ItemInst::PopItem(int16 sub_slot)
@@ -1937,6 +2112,11 @@ void ItemInst::_PutItem(int16 contents_index, ItemInst* inst)
 // ######################################################################################
 
 
+/*
+ Class: EvoItemInst ######################################################################
+	<description>
+ #########################################################################################
+*/
 // Methods for EvoItemInst, the extended ItemInst for evolving/scaling items
 // Copy constructors
 EvoItemInst::EvoItemInst(const EvoItemInst &copy)
@@ -2182,8 +2362,14 @@ EvolveInfo::EvolveInfo(uint32 first, uint8 max, bool allkills, uint32 L2, uint32
 	LvlKills[7]	= L9;
 	LvlKills[8]	= L10;
 }
+// ######################################################################################
 
 
+/*
+ Structure: Item_Struct ######################################################################
+	<description>
+ #############################################################################################
+*/
 bool Item_Struct::IsEquipable(uint16 race_id, uint16 class_id) const
 {
 	bool IsRace = false;
@@ -2226,3 +2412,4 @@ bool Item_Struct::IsEquipable(uint16 race_id, uint16 class_id) const
 
 	return (IsRace && IsClass);
 }
+// #############################################################################################
